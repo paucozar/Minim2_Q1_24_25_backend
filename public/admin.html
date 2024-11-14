@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Página de Admin</title>
+</head>
+<body>
+<h2>Crear Usuario</h2>
+<form id="createUserForm">
+  <label for="newUsername">Usuario:</label>
+  <input type="text" id="newUsername" required>
+  <label for="newPassword">Contraseña:</label>
+  <input type="password" id="newPassword" required>
+  <label for="isAdmin">¿Es Admin?</label>
+  <input type="checkbox" id="isAdmin">
+  <button type="submit">Crear Usuario</button>
+</form>
+<div id="createUserResult"></div>
+
+<h2>Gestionar Permisos</h2>
+<form id="managePermissionsForm">
+  <label for="manageUsername">Usuario:</label>
+  <input type="text" id="manageUsername" required>
+  <label for="setAdmin">¿Es Admin?</label>
+  <input type="checkbox" id="setAdmin">
+  <button type="submit">Actualizar Permisos</button>
+</form>
+<div id="managePermissionsResult"></div>
+
+<h2>Lista de Usuarios</h2>
+<button onclick="fetchUsers()">Listar Usuarios</button>
+<ul id="userList"></ul>
+
+<h2>Eliminarrs Usuario</h2>
+<form id="deleteUserForm">
+  <label for="deleteUsername">Nombre de Usuario:</label>
+  <input type="text" id="deleteUsername" required>
+  <button type="submit">Eliminar Usuario</button>
+</form>
+<div id="deleteUserResult"></div>
+
+<script>
+  // Función para crear un nuevo usuario
+  document.getElementById('createUserForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+      const username = document.getElementById('newUsername').value;
+      const password = document.getElementById('newPassword').value;
+      const isAdmin = document.getElementById('isAdmin').checked;
+
+      fetch('http://localhost:8080/dsaApp/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, isAdmin })
+      })
+      .then(response => response.ok ? response.json() : Promise.reject(response.statusText))
+      .then(data => {
+          document.getElementById('createUserResult').textContent = 'Usuario creado: ' + data.username;
+          fetchUsers(); // Actualizar la lista de usuarios después de crear uno nuevo
+      })
+      .catch(error => {
+          document.getElementById('createUserResult').textContent = 'Error: ' + error;
+      });
+  });
+
+  // Función para gestionar permisos de usuario
+  document.getElementById('managePermissionsForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+      const username = document.getElementById('manageUsername').value;
+      const setAdmin = document.getElementById('setAdmin').checked;
+
+      fetch(`http://localhost:8080/dsaApp/users/${username}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isAdmin: setAdmin })
+      })
+      .then(response => response.ok ? response.json() : Promise.reject(response.statusText))
+      .then(data => {
+          document.getElementById('managePermissionsResult').textContent = 'Permisos actualizados para: ' + data.username;
+          fetchUsers(); // Actualizar la lista de usuarios después de actualizar permisos
+      })
+      .catch(error => {
+          document.getElementById('managePermissionsResult').textContent = 'Error: ' + error;
+      });
+  });
+
+  // Función para listar todos los usuarios
+function fetchUsers() {
+    fetch('http://localhost:8080/dsaApp/users', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.ok ? response.json() : Promise.reject(response.statusText))
+    .then(data => {
+        console.log(data); // Añade esto para ver la respuesta completa
+        const userList = document.getElementById('userList');
+        userList.innerHTML = '';
+        data.forEach(user => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `Usuario: ${user.username}, Admin: ${user.isAdmin ? 'Sí' : 'No'}`;
+            userList.appendChild(listItem);
+        });
+    })
+    .catch(error => {
+        document.getElementById('userList').textContent = 'Error al cargar usuarios: ' + error;
+    });
+}
+
+  // Función para eliminar un usuario
+    document.getElementById('deleteUserForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const username = document.getElementById('deleteUsername').value;
+
+            fetch(`http://localhost:8080/dsaApp/users/${username}`, {  // Usamos el `username` en la URL
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return Promise.reject(response.statusText);
+                }
+                document.getElementById('deleteUserResult').textContent = 'Usuario eliminado: ' + username;
+                fetchUsers(); // Actualizar la lista de usuarios después de eliminar uno
+            })
+            .catch(error => {
+                document.getElementById('deleteUserResult').textContent = 'Error al eliminar usuario: ' + error;
+            });
+        });
+
+  // Cargar la lista de usuarios al cargar la página
+  fetchUsers();
+</script>
+</body>
+</html>

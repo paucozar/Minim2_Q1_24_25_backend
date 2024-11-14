@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de API - Login y Registro</title>
+</head>
+<body>
+<h2>Registro</h2>
+<form id="registerForm">
+    <label for="registerUsername">Usuario:</label>
+    <input type="text" id="registerUsername" required>
+    <label for="registerPassword">Contraseña:</label>
+    <input type="password" id="registerPassword" required>
+    <button type="submit">Registrarse</button>
+</form>
+<div id="registerResult"></div>
+
+<h2>Login</h2>
+<form id="loginForm">
+    <label for="loginUsername">Usuario:</label>
+    <input type="text" id="loginUsername" required>
+    <label for="loginPassword">Contraseña:</label>
+    <input type="password" id="loginPassword" required>
+    <button type="submit">Iniciar sesión</button>
+</form>
+<div id="loginResult"></div>
+
+<script>
+    document.getElementById('registerForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const username = document.getElementById('registerUsername').value;
+        const password = document.getElementById('registerPassword').value;
+
+        fetch('http://localhost:8080/dsaApp/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return Promise.reject('Error: ' + response.status + ' - ' + response.statusText);
+            }
+            return response.text();
+        })
+        .then(data => {
+            document.getElementById('registerResult').textContent = data;
+        })
+        .catch(error => {
+            document.getElementById('registerResult').textContent = 'Error: ' + error;
+        });
+    });
+
+   document.getElementById('loginForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+
+    fetch('http://localhost:8080/dsaApp/users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return Promise.reject('Error: ' + response.status + ' - ' + response.statusText);
+        }
+        return response.json(); // Asegúrate de que se espera un JSON
+    })
+    .then(data => {
+        document.getElementById('loginResult').textContent = data.message; // Mostrar el mensaje
+        if (data.redirect) {
+            window.location.href = data.redirect; // Redirigir a admin.html si existe
+        }
+    })
+    .catch(error => {
+        document.getElementById('loginResult').textContent = 'Error: ' + error;
+    });
+});
+
+</script>
+</body>
+</html>
