@@ -43,7 +43,7 @@ public class UserManagerImpl implements UserManager {
 
 
     @Override
-    public User addUser(String username, String password, boolean isAdmin) {
+    public User addUser(String username, String password, String isAdmin) {
         // Verificar si la contraseña no está vacía antes de encriptar
         if (password == null || password.trim().isEmpty()) {
             logger.warn("Contraseña vacía para el usuario: " + username);
@@ -68,15 +68,30 @@ public class UserManagerImpl implements UserManager {
         return null;
     }
 
+    public User getUserByUsername(String name) {
+        logger.info("getUser("+name+")");
+
+        for (User t: this.Users) {
+            if (t.getUsername().equals(name)) {
+                logger.info("getUsername("+name+"): "+t);
+
+                return t;
+            }
+        }
+
+        logger.warn("not found " + name);
+        return null;
+    }
 
     public List<User> findAll() {
         return this.Users;
     }
 
     @Override
-    public void deleteUser(String id) {
+    public void deleteUser(String name) {
 
-        User t = this.getUser(id);
+
+        User t = this.getUserByUsername(name);
         if (t==null) {
             logger.warn("not found " + t);
         }
@@ -109,12 +124,5 @@ public class UserManagerImpl implements UserManager {
         this.Users.clear();
     }
 
-    public User getUserByUsername(String username) {
-        for (User user : this.Users) {
-            if (user.getUsername().equals(username)) {
-                return user;
-            }
-        }
-        return null;
-    }
+
 }

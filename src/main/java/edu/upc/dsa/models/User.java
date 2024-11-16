@@ -6,12 +6,12 @@ public class User {
      String username;
      String password; // Recuerda que normalmente se debe almacenar hasheada
      String id;
-    boolean isAdmin;
+     String isAdmin;
 
     public User() {this.setId(RandomUtils.getId());
-        this.isAdmin = false;}
+        this.isAdmin = "notadmin";}
 
-    public User(String username, String password, boolean isAdmin) {
+    public User(String username, String password, String isAdmin) {
         this();
         if (id != null) this.setId(id);
         this.setPassword(password);
@@ -19,11 +19,11 @@ public class User {
         this.isAdmin = isAdmin;
     }
 
-    public boolean isAdmin() {
+    public String getIsAdmin() {
         return isAdmin;
     }
 
-    public void setAdmin(boolean admin) {
+    public void setIsAdmin(String admin) {
         isAdmin = admin;
     }
 
