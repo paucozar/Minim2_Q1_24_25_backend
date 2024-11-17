@@ -8,11 +8,18 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.mindrot.jbcrypt.BCrypt;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.util.HashSet;
 import java.util.List;
+import javax.ws.rs.core.Application;
 
 import org.apache.log4j.Logger;
 import javax.annotation.Priority;
@@ -22,22 +29,31 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.security.Principal;
-
-
+import java.util.Set;
 
 
 @Api(value = "/users", description = "Endpoint to user Service")
 @Path("/users")
 @Produces(MediaType.APPLICATION_JSON)
-public class UserService {
+public class UserService extends Application {
+
+    @Override
+    public Set<Class<?>> getClasses() {
+        Set<Class<?>> classes = new HashSet<>();
+        classes.add(UserService.class);  // El servicio de usuarios
+        classes.add(AuthFilter.class);   // El filtro de autenticación
+        return classes;
+    }
+
     private static final Logger logger = Logger.getLogger(UserService.class);
     private UserManager us;
+
     public UserService() {
         this.us = UserManagerImpl.getInstance();
-        if (us.size()==0) {
+        if (us.size() == 0) {
             this.us.addUser("Admin", "admin", "admin");
             this.us.addUser("user1", "User1", "notadmin");
-            this.us.addUser("user2", "User2", "notadmin" );
+            this.us.addUser("user2", "User2", "notadmin");
         }
     }
 
@@ -51,52 +67,56 @@ public class UserService {
             String username = requestContext.getHeaderString("X-Username");
             String role = requestContext.getHeaderString("X-Role");
 
-            if (username != null && role != null) {
-                // Crear un contexto de seguridad personalizado basado en el encabezado "X-Role"
-                SecurityContext securityContext = new SecurityContext() {
-                    @Override
-                    public Principal getUserPrincipal() {
-                        return () -> username;
-                    }
-
-                    @Override
-                    public boolean isUserInRole(String r) {
-                        // Si "role" es "admin", el usuario es administrador
-                        return "admin".equalsIgnoreCase(role) && "admin".equalsIgnoreCase(r);
-                    }
-
-                    @Override
-                    public boolean isSecure() {
-                        return requestContext.getUriInfo().getAbsolutePath().toString().startsWith("https");
-                    }
-
-                    @Override
-                    public String getAuthenticationScheme() {
-                        return "CustomAuth";
-                    }
-                };
-                // Establece el SecurityContext personalizado
-                requestContext.setSecurityContext(securityContext);
-            } else {
-                // Si faltan los encabezados, aborta con una respuesta de Unauthorized
+            // Verificar si los encabezados son correctos
+            if (username == null || role == null) {
                 requestContext.abortWith(Response
                         .status(Response.Status.UNAUTHORIZED)
                         .entity("{\"message\": \"Unauthorized: Missing authentication headers\"}")
                         .build());
+                return;
             }
+
+            // Crear un contexto de seguridad personalizado basado en el encabezado "X-Role"
+            SecurityContext securityContext = new SecurityContext() {
+                @Override
+                public Principal getUserPrincipal() {
+                    return () -> username;
+                }
+
+                @Override
+                public boolean isUserInRole(String r) {
+                    // Si "role" es "admin", el usuario es administrador
+                    return "admin".equalsIgnoreCase(role) && "admin".equalsIgnoreCase(r);
+                }
+
+                @Override
+                public boolean isSecure() {
+                    return requestContext.getUriInfo().getAbsolutePath().toString().startsWith("https");
+                }
+
+                @Override
+                public String getAuthenticationScheme() {
+                    return "CustomAuth";
+                }
+            };
+
+            // Establecer el contexto de seguridad personalizado
+            requestContext.setSecurityContext(securityContext);
         }
     }
+
 
     @GET
     @ApiOperation(value = "get all User", notes = "asdasd")
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Successful", response = User.class, responseContainer="List"),
+            @ApiResponse(code = 201, message = "Successful", response = User.class, responseContainer = "List"),
     })
     // Elimina @Path("/") porque ya tienes /tracks a nivel de clase
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUser() {
         List<User> users = this.us.findAll();
-        GenericEntity<List<User>> entity = new GenericEntity<List<User>>(users) {};
+        GenericEntity<List<User>> entity = new GenericEntity<List<User>>(users) {
+        };
         return Response.ok(entity).build();
     }
 
@@ -113,6 +133,21 @@ public class UserService {
         if (u == null) return Response.status(404).build();
         else return Response.status(201).entity(u).build();
     }
+
+    @GET
+    @ApiOperation(value = "get a User Profile", notes = "asdasd")
+    @ApiResponses(value = {
+            @ApiResponse(code = 201, message = "Successful", response = User.class),
+            @ApiResponse(code = 404, message = "User not found")
+    })
+    @Path("/{username}/profile")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getUserProfile(@PathParam("username") String username) {
+        User u = this.us.getUserProfileByUsername(username);
+        if (u == null) return Response.status(404).build();
+        else return Response.status(201).entity(u).build();
+    }
+
 
     @DELETE
     @ApiOperation(value = "delete a User", notes = "Elimina un usuario específico si es un administrador")
@@ -185,6 +220,54 @@ public class UserService {
         return Response.status(200).entity(existingUser).build();
     }
 
+    @PUT
+    @Path("/{username}/profile")
+    @Consumes(MediaType.APPLICATION_JSON) // Cambiado a JSON
+    @ApiOperation(value = "update a User profile", notes = "Permite a un usuario actualizar su perfil")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Perfil actualizado exitosamente"),
+            @ApiResponse(code = 404, message = "Usuario no encontrado")
+    })
+    public Response updateUserProfile(@PathParam("username") String username,
+                                      User userProfileUpdate) { // Recibe el JSON mapeado a un objeto Java
+        try {
+            // Obtener el usuario actual
+            User existingUser = this.us.getUserByUsername(username);
+            if (existingUser == null) {
+                logger.warn("Usuario no encontrado: " + username);
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("{\"message\": \"Usuario no encontrado\"}")
+                        .build();
+            }
+
+            // Actualizar los parámetros del perfil con los valores del JSON
+            if (userProfileUpdate.getFullName() != null) {
+                existingUser.setFullName(userProfileUpdate.getFullName());
+            }
+            if (userProfileUpdate.getEmail() != null) {
+                existingUser.setEmail(userProfileUpdate.getEmail());
+            }
+            if (userProfileUpdate.getAge() != 0) {
+                existingUser.setAge(userProfileUpdate.getAge());
+            }
+
+            // Actualizar el usuario en el sistema
+            this.us.updateUser(existingUser);
+
+            logger.info("Perfil actualizado para el usuario: " + username);
+            return Response.status(Response.Status.OK)
+                    .entity(existingUser)
+                    .build();
+        } catch (Exception e) {
+            logger.error("Error al actualizar el perfil de usuario: " + e.getMessage(), e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("{\"message\": \"Error interno del servidor\"}")
+                    .build();
+        }
+    }
+
+
+
     @POST
     @ApiOperation(value = "create a new User", notes = "asdasd")
     @ApiResponses(value = {
@@ -221,9 +304,7 @@ public class UserService {
             String role = storedUser.getIsAdmin().equals("admin") ? "admin" : "user";
 
             return Response.ok()
-                    .header("X-Username", user.getUsername())
-                    .header("X-Role", role)
-                    .entity("{\"message\": \"Login exitoso\", \"redirect\": \"" + (role.equals("admin") ? "admin.html" : "user.html") + "\"}")
+                    .entity("{\"message\": \"Login exitoso\", \"role\": \"" + role + "\", \"redirect\": \"" + (role.equals("admin") ? "admin.html" : "user.html") + "\"}")
                     .build();
         } catch (Exception e) {
             logger.error("Error al iniciar sesión: " + e.getMessage());

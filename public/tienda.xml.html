@@ -3,14 +3,73 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Items en la Tienda</title>
+  <title>Tienda</title>
   <style>
     body {
         font-family: Arial, sans-serif;
-        background-color: #f4f4f4;
+        background-color: #f4f9fc;
         margin: 0;
         padding: 0;
+        color: #333;
     }
+
+    header {
+        background-color: #007acc;
+        color: white;
+        padding: 10px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    header h1 {
+        margin: 0;
+        font-size: 1.5rem;
+    }
+
+    .menu-container {
+        position: relative;
+    }
+
+    .menu-button {
+        background-color: #005f99;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+
+    .menu-button:hover {
+        background-color: #004577;
+    }
+
+    .dropdown-menu {
+        position: absolute;
+        right: 0;
+        top: 50px;
+        background-color: white;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 5px;
+        display: none;
+        flex-direction: column;
+        min-width: 150px;
+    }
+
+    .dropdown-menu a {
+        text-decoration: none;
+        padding: 10px 15px;
+        color: #333;
+        display: block;
+        font-size: 1rem;
+    }
+
+    .dropdown-menu a:hover {
+        background-color: #f4f9fc;
+        color: #007acc;
+    }
+
     .container {
         max-width: 800px;
         margin: 50px auto;
@@ -19,28 +78,53 @@
         box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
         border-radius: 5px;
     }
+
     h1 {
-        color: #333;
+        color: #007acc;
     }
+
     table {
         width: 100%;
         border-collapse: collapse;
         margin-top: 20px;
     }
+
     th, td {
-        border: 1px solid black;
-        padding: 8px;
+        border: 1px solid #ddd;
+        padding: 10px;
         text-align: left;
     }
+
     th {
-        background-color: #f2f2f2;
+        background-color: #007acc;
+        color: white;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    tr:hover {
+        background-color: #f1f1f1;
     }
   </style>
 </head>
 <body>
 
+<header>
+  <h1 id="welcomeMessage">Tienda</h1>
+  <div class="menu-container">
+    <button class="menu-button">Menú</button>
+    <div class="dropdown-menu">
+      <a href="profile.html">Ver Perfil</a>
+      <a href="http://localhost:8080/user.html">Inicio</a>
+      <a href="#" id="logoutButton" style="color: #dc3545;">Cerrar Sesión</a>
+    </div>
+  </div>
+</header>
+
 <div class="container">
-  <h1>Items en la Tienda</h1>
+  <h1>Items Disponibles</h1>
   <table>
     <thead>
     <tr>
@@ -57,6 +141,37 @@
 </div>
 
 <script>
+  // Mostrar/Ocultar menú desplegable
+  const menuButton = document.querySelector('.menu-button');
+  const dropdownMenu = document.querySelector('.dropdown-menu');
+
+  menuButton.addEventListener('click', () => {
+      const isVisible = dropdownMenu.style.display === 'block';
+      dropdownMenu.style.display = isVisible ? 'none' : 'block';
+  });
+
+  // Personalizar el mensaje de bienvenida con el username
+  const username = localStorage.getItem('username');
+  if (username) {
+      document.getElementById('welcomeMessage').textContent = `Bienvenido, ${username}`;
+  }
+
+  // Cerrar sesión redirigiendo a la página inicial
+  const logoutButton = document.getElementById('logoutButton');
+  logoutButton.addEventListener('click', (event) => {
+      event.preventDefault();
+      localStorage.clear(); // Borra toda la información guardada
+      window.location.href = 'http://localhost:8080/';
+  });
+
+  // Ocultar menú si se hace clic fuera
+  document.addEventListener('click', (event) => {
+      if (!menuButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+          dropdownMenu.style.display = 'none';
+      }
+  });
+
+  // Fetch items and populate the table
   async function fetchItems() {
       try {
           const response = await fetch('http://localhost:8080/dsaApp/store');

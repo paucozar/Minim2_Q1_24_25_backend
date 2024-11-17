@@ -3,22 +3,36 @@ package edu.upc.dsa.models;
 import edu.upc.dsa.util.RandomUtils;
 
 public class User {
-     String username;
-     String password; // Recuerda que normalmente se debe almacenar hasheada
-     String id;
-     String isAdmin;
+    private String username;
+    private String password; // Recuerda que normalmente se debe almacenar hasheada
+    private String id;
+    private String isAdmin;
+    private String fullName;
+    private String email;
+    private int age;
+    private String profilePicture; // URL o path de la imagen de perfil
 
-    public User() {this.setId(RandomUtils.getId());
-        this.isAdmin = "notadmin";}
+    public User() {
+        this.setId(RandomUtils.getId());
+        this.isAdmin = "notadmin";
+    }
 
     public User(String username, String password, String isAdmin) {
         this();
-        if (id != null) this.setId(id);
-        this.setPassword(password);
         this.setUsername(username);
+        this.setPassword(password);
         this.isAdmin = isAdmin;
     }
 
+    public User(String username, String password, String isAdmin, String fullName, String email, int age, String profilePicture) {
+        this(username, password, isAdmin);
+        this.fullName = fullName;
+        this.email = email;
+        this.age = age;
+        this.profilePicture = profilePicture;
+    }
+
+    // Getters y Setters
     public String getIsAdmin() {
         return isAdmin;
     }
@@ -46,11 +60,46 @@ public class User {
     public String getId() {
         return id;
     }
+
     public void setId(String id) {
         this.id = id;
     }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public String getProfilePicture() {
+        return profilePicture;
+    }
+
+    public void setProfilePicture(String profilePicture) {
+        this.profilePicture = profilePicture;
+    }
+
     @Override
     public String toString() {
-        return "User [id="+id+", username=" + username + ", password=" + password +"]";
+        return "User [id=" + id + ", username=" + username + ", password=" + password + ", fullName=" + fullName +
+                ", email=" + email + ", age=" + age + ", profilePicture=" + profilePicture + "]";
     }
 }

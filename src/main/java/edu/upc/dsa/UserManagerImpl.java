@@ -13,36 +13,40 @@ public class UserManagerImpl implements UserManager {
     protected List<User> Users;
     final static Logger logger = Logger.getLogger(UserManagerImpl.class);
 
-
     private UserManagerImpl() {
         this.Users = new LinkedList<>();
     }
 
     public static UserManager getInstance() {
-        if (instance==null) instance = new UserManagerImpl();
+        if (instance == null) instance = new UserManagerImpl();
         return instance;
     }
 
     public int size() {
         int ret = this.Users.size();
         logger.info("size " + ret);
-
         return ret;
     }
 
     public User addUsers(User t) {
         logger.info("new User " + t);
-
-        this.Users.add (t);
+        this.Users.add(t);
         logger.info("new User added");
         return t;
     }
 
-
-
-
-
     @Override
+    public User addUser(String username, String password, String isAdmin, String fullName, String email, int age, String profilePicture) {
+        // Verificar si la contraseña no está vacía antes de encriptar
+        if (password == null || password.trim().isEmpty()) {
+            logger.warn("Contraseña vacía para el usuario: " + username);
+            throw new IllegalArgumentException("La contraseña no puede estar vacía");
+        }
+        String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
+        // Crear un nuevo usuario con los parámetros adicionales
+        return this.addUsers(new User(username, hashedPassword, isAdmin, fullName, email, age, profilePicture));
+    }
+
     public User addUser(String username, String password, String isAdmin) {
         // Verificar si la contraseña no está vacía antes de encriptar
         if (password == null || password.trim().isEmpty()) {
@@ -50,35 +54,42 @@ public class UserManagerImpl implements UserManager {
             throw new IllegalArgumentException("La contraseña no puede estar vacía");
         }
         String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
-        return this.addUsers(new User(username, hashedPassword, isAdmin));
+        // Crear un nuevo usuario con los parámetros adicionales
+        return this.addUsers(new User(username, hashedPassword, isAdmin, null, null, 0, null));
     }
 
+
     public User getUser(String id) {
-        logger.info("getUser("+id+")");
-
-        for (User t: this.Users) {
+        logger.info("getUser(" + id + ")");
+        for (User t : this.Users) {
             if (t.getId().equals(id)) {
-                logger.info("getTrack("+id+"): "+t);
-
+                logger.info("getUser(" + id + "): " + t);
                 return t;
             }
         }
-
         logger.warn("not found " + id);
         return null;
     }
 
     public User getUserByUsername(String name) {
-        logger.info("getUser("+name+")");
-
-        for (User t: this.Users) {
+        logger.info("getUser(" + name + ")");
+        for (User t : this.Users) {
             if (t.getUsername().equals(name)) {
-                logger.info("getUsername("+name+"): "+t);
-
+                logger.info("getUsername(" + name + "): " + t);
                 return t;
             }
         }
-
+        logger.warn("not found " + name);
+        return null;
+    }
+    public User getUserProfileByUsername(String name) {
+        logger.info("getUser(" + name + ")");
+        for (User t : this.Users) {
+            if (t.getUsername().equals(name)) {
+                logger.info("getUsername(" + name + "): " + t);
+                return t;
+            }
+        }
         logger.warn("not found " + name);
         return null;
     }
@@ -89,40 +100,36 @@ public class UserManagerImpl implements UserManager {
 
     @Override
     public void deleteUser(String name) {
-
-
         User t = this.getUserByUsername(name);
-        if (t==null) {
+        if (t == null) {
             logger.warn("not found " + t);
+        } else {
+            logger.info(t + " deleted ");
         }
-        else logger.info(t+" deleted ");
-
         this.Users.remove(t);
-
     }
 
     @Override
     public User updateUser(User p) {
         User t = this.getUser(p.getId());
-
-        if (t!=null) {
-            logger.info(p+" rebut!!!! ");
+        if (t != null) {
+            logger.info(p + " rebut!!!! ");
 
             t.setUsername(p.getUsername());
             t.setPassword(p.getPassword());
+            t.setFullName(p.getFullName());
+            t.setEmail(p.getEmail());
+            t.setAge(p.getAge());
+            t.setProfilePicture(p.getProfilePicture());
 
-            logger.info(t+" updated ");
+            logger.info(t + " updated ");
+        } else {
+            logger.warn("not found " + p);
         }
-        else {
-            logger.warn("not found "+p);
-        }
-
         return t;
     }
 
     public void clear() {
         this.Users.clear();
     }
-
-
 }

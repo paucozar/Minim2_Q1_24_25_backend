@@ -8,11 +8,11 @@ import java.util.List;
 public interface UserManager {
 
 
-
+    public User addUser(String username, String password, String isAdmin, String fullName, String email, int age, String profilePicture);
     public User addUser(String username, String password, String isAdmin);
     public User addUsers(User user);
     public User getUser(String id);
-
+    public User getUserProfileByUsername(String username);
 
 
     public List<User> findAll();

@@ -28,9 +28,7 @@
 </form>
 <div id="managePermissionsResult"></div>
 
-<h2>Lista de Usuarios</h2>
-<button onclick="fetchUsers()">Listar Usuarios</button>
-<ul id="userList"></ul>
+<button onclick="logout()">Cerrar sesión</button>
 
 <h2>Eliminarrs Usuario</h2>
 <form id="deleteUserForm">
@@ -40,113 +38,133 @@
 </form>
 <div id="deleteUserResult"></div>
 
+<h2>Salir</h2>
+<button onclick="fetchUsers()">Listar Usuarios</button>
+<ul id="userList"></ul>
 <script>
 
-  // Función para crear un nuevo usuario
-  document.getElementById('createUserForm').addEventListener('submit', function(event) {
-      event.preventDefault();
-      const username = document.getElementById('newUsername').value;
-      const password = document.getElementById('newPassword').value;
-      const isAdmin = document.getElementById('isAdmin').checked ? 'admin' : 'notadmin';
+ window.onload = function() {
+           // Verificar si el usuario tiene el rol de administrador en localStorage
+           const userRole = localStorage.getItem('role');
 
-      fetch('http://localhost:8080/dsaApp/users', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password, isAdmin })
-      })
-      .then(response => response.ok ? response.json() : Promise.reject(response.statusText))
-      .then(data => {
-          document.getElementById('createUserResult').textContent = 'Usuario creado: ' + data.username;
-          fetchUsers(); // Actualizar la lista de usuarios después de crear uno nuevo
-      })
-      .catch(error => {
-          document.getElementById('createUserResult').textContent = 'Error: ' + error;
-      });
-  });
+           if (userRole !== 'admin') {
+               // Si no es admin, redirigir a una página de acceso denegado o inicio
+               window.location.href = 'http://localhost:8080/dsaApp/'; // Redirige al inicio
+           }
+       };
+ function logout() {
+             // Eliminar los datos del localStorage (si los hay)
+             localStorage.removeItem('username');
+             localStorage.removeItem('role');
 
-  // Función para gestionar permisos de usuario
-  document.getElementById('managePermissionsForm').addEventListener('submit', function(event) {
-      event.preventDefault();
-      const username = document.getElementById('manageUsername').value;
-      const setAdmin = document.getElementById('setAdmin').checked ? 'admin' : 'notadmin';
+             // Redirigir a la página de inicio o login
+             window.location.href = 'http://localhost:8080';  // Cambia la URL por la de tu página de inicio o login
+         }
+   // Función para crear un nuevo usuario
+   document.getElementById('createUserForm').addEventListener('submit', function(event) {
+       event.preventDefault();
+       const username = document.getElementById('newUsername').value;
+       const password = document.getElementById('newPassword').value;
+       const isAdmin = document.getElementById('isAdmin').checked ? 'admin' : 'notadmin';
 
-      fetch(`http://localhost:8080/dsaApp/users/${username}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ isAdmin: setAdmin })
-      })
-      .then(response => response.ok ? response.json() : Promise.reject(response.statusText))
-      .then(data => {
-          document.getElementById('managePermissionsResult').textContent = 'Permisos actualizados para: ' + data.username;
-          fetchUsers(); // Actualizar la lista de usuarios después de actualizar permisos
-      })
-      .catch(error => {
-          document.getElementById('managePermissionsResult').textContent = 'Error: ' + error;
-      });
-  });
+       fetch('http://localhost:8080/dsaApp/users', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ username, password, isAdmin })
+       })
+       .then(response => response.ok ? response.json() : Promise.reject(response.statusText))
+       .then(data => {
+           document.getElementById('createUserResult').textContent = 'Usuario creado: ' + data.username;
+           fetchUsers(); // Actualizar la lista de usuarios después de crear uno nuevo
+       })
+       .catch(error => {
+           document.getElementById('createUserResult').textContent = 'Error: ' + error;
+       });
+   });
 
-  // Función para listar todos los usuarios
-function fetchUsers() {
-    fetch('http://localhost:8080/dsaApp/users', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-    })
-  .then(response => response.ok ? response.json() : Promise.reject(response.statusText))
-.then(data => {
-    console.log(data); // Añade esto para ver la respuesta completa
-    const userList = document.getElementById('userList');
-    userList.innerHTML = '';
-    data.forEach(user => {
-        const listItem = document.createElement('li');
-        listItem.textContent = `Usuario: ${user.username}, Admin: ${user.isAdmin}`;
-        userList.appendChild(listItem);
-    });
-})
-.catch(error => {
-        document.getElementById('userList').textContent = 'Error al cargar usuarios: ' + error;
-    });
-}
+   // Función para gestionar permisos de usuario
+   document.getElementById('managePermissionsForm').addEventListener('submit', function(event) {
+       event.preventDefault();
+       const username = document.getElementById('manageUsername').value;
+       const setAdmin = document.getElementById('setAdmin').checked ? 'admin' : 'notadmin';
 
-// Función para eliminar un usuario
-document.getElementById('deleteUserForm').addEventListener('submit', function(event) {
-    event.preventDefault();
-    const username = document.getElementById('deleteUsername').value;
-    const currentUsername = localStorage.getItem('username');
-    const role = localStorage.getItem('role'); // El rol del usuario (admin o user)
-  console.log('currentUsername:', currentUsername, 'role:', role);
-    // Verifica si el usuario está autenticado
-    if (!currentUsername || !role) {
-        alert('No estás autenticado. Por favor, inicia sesión de nuevo.');
-        return;
-    }
+       fetch(`http://localhost:8080/dsaApp/users/${username}`, {
+           method: 'PUT',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ isAdmin: setAdmin })
+       })
+       .then(response => response.ok ? response.json() : Promise.reject(response.statusText))
+       .then(data => {
+           document.getElementById('managePermissionsResult').textContent = 'Permisos actualizados para: ' + data.username;
+           fetchUsers(); // Actualizar la lista de usuarios después de actualizar permisos
+       })
+       .catch(error => {
+           document.getElementById('managePermissionsResult').textContent = 'Error: ' + error;
+       });
+   });
 
-    fetch(`http://localhost:8080/dsaApp/users/${username}`, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Username': currentUsername,  // Usando el nombre de usuario de localStorage
-            'X-Role': role                   // Usando el rol de localStorage
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(error => { throw new Error(error.message || response.statusText); });
-        }
-        document.getElementById('deleteUserResult').textContent = 'Usuario eliminado: ' + username;
-        fetchUsers(); // Actualizar la lista de usuarios después de eliminar uno
-    })
-    .catch(error => {
-        console.error('Error al eliminar usuario:', error);
-        document.getElementById('deleteUserResult').textContent = 'Error al eliminar usuario: ' + error;
-    });
-});
+   // Función para listar todos los usuarios
+ function fetchUsers() {
+     fetch('http://localhost:8080/dsaApp/users', {
+         method: 'GET',
+         headers: { 'Content-Type': 'application/json' }
+     })
+   .then(response => response.ok ? response.json() : Promise.reject(response.statusText))
+ .then(data => {
+     console.log(data); // Añade esto para ver la respuesta completa
+     const userList = document.getElementById('userList');
+     userList.innerHTML = '';
+     data.forEach(user => {
+         const listItem = document.createElement('li');
+         listItem.textContent = `Usuario: ${user.username}, Admin: ${user.isAdmin}, ID: ${user.id}`;
+         userList.appendChild(listItem);
+     });
+ })
+ .catch(error => {
+         document.getElementById('userList').textContent = 'Error al cargar usuarios: ' + error;
+     });
+ }
+
+ // Función para eliminar un usuario
+ document.getElementById('deleteUserForm').addEventListener('submit', function(event) {
+     event.preventDefault();
+     const username = document.getElementById('deleteUsername').value;
+     const currentUsername = localStorage.getItem('username');
+     const role = localStorage.getItem('role'); // El rol del usuario (admin o user)
+   console.log('currentUsername:', currentUsername, 'role:', role);
+     // Verifica si el usuario está autenticado
+     if (!currentUsername || !role) {
+         alert('No estás autenticado. Por favor, inicia sesión de nuevo.');
+         return;
+     }
+
+     fetch(`http://localhost:8080/dsaApp/users/${username}`, {
+         method: 'DELETE',
+         headers: {
+             'Content-Type': 'application/json',
+             'X-Username': currentUsername,  // Usando el nombre de usuario de localStorage
+             'X-Role': role                   // Usando el rol de localStorage
+         }
+     })
+     .then(response => {
+         if (!response.ok) {
+             return response.json().then(error => { throw new Error(error.message || response.statusText); });
+         }
+         document.getElementById('deleteUserResult').textContent = 'Usuario eliminado: ' + username;
+         fetchUsers(); // Actualizar la lista de usuarios después de eliminar uno
+     })
+     .catch(error => {
+         console.error('Error al eliminar usuario:', error);
+         document.getElementById('deleteUserResult').textContent = 'Error al eliminar usuario: ' + error;
+     });
+ });
 
 
 
 
 
-  // Cargar la lista de usuarios al cargar la página
-  fetchUsers();
+   // Cargar la lista de usuarios al cargar la página
+   fetchUsers();
 </script>
 </body>
 </html>
