@@ -284,6 +284,7 @@ public class UserService extends Application {
         return Response.status(201).entity(user).build();
     }
 
+
     @POST
     @ApiOperation(value = "login a User", notes = "Login a user with username and password")
     @ApiResponses(value = {
@@ -303,7 +304,8 @@ public class UserService extends Application {
             }
 
             String role = storedUser.getIsAdmin().equals("admin") ? "admin" : "user";
-            int coins = 0;
+            int coins = storedUser.getCoins();
+
 
             return Response.ok()
                     .entity("{\"message\": \"Login exitoso\", \"role\": \"" + role + "\", \"coins\": " + coins + ", \"redirect\": \"" + (role.equals("admin") ? "admin.html" : "user.html") + "\"}")                    .build();
@@ -312,7 +314,6 @@ public class UserService extends Application {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("{\"message\": \"Error interno del servidor\"}").build();
         }
     }
-
 
 
 }

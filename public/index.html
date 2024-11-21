@@ -167,12 +167,12 @@
         event.preventDefault();
         const username = document.getElementById('loginUsername').value;
         const password = document.getElementById('loginPassword').value;
-        const coins = 0;
+
 
         fetch('http://localhost:8080/dsaApp/users/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password, coins })
+            body: JSON.stringify({ username, password})
         })
         .then(response => {
             if (!response.ok) {
@@ -184,7 +184,7 @@
             showMessage('loginResult', '¡Login exitoso! Iniciando sesión', 'success');
             localStorage.setItem('username', username);
             localStorage.setItem('role', data.role);
-            localStorage.setItem('coins', coins);
+            localStorage.setItem('coins', data.coins);
             setTimeout(() => window.location.href = data.redirect, 1500);
         })
         .catch(error => {

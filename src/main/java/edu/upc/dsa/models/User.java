@@ -31,7 +31,7 @@ public class User {
         this.email = email;
         this.age = age;
         this.profilePicture = profilePicture;
-        this.coins = 0;
+        this.coins = coins;
     }
 
     // Getters y Setters
