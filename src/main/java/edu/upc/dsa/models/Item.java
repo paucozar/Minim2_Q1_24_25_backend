@@ -4,12 +4,12 @@ public class Item implements Comparable<Item> {
     private String id;
     private String name;
     private String description;
-    private double price;
+    private int price;
     private String imageUrl;
 
     public Item() {}
 
-    public Item(String id, String name, String description, double price, String imageUrl) {
+    public Item(String id, String name, String description, int price, String imageUrl) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -41,11 +41,11 @@ public class Item implements Comparable<Item> {
         this.description = description;
     }
 
-    public double getPrice() {
+    public int getPrice() {
         return price;
     }
 
-    public void setPrice(double price) {
+    public void setPrice(int price) {
         this.price = price;
     }
 

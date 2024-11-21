@@ -138,7 +138,6 @@ tr:hover {
   </div>
 </header>
 
-
 <div class="container">
   <h1>Items Disponibles</h1>
   <table>
@@ -149,6 +148,7 @@ tr:hover {
       <th>Descripción</th>
       <th>Precio</th>
       <th>Imagen</th>
+      <th>Acción</th>
     </tr>
     </thead>
     <tbody id="itemsTableBody">
@@ -157,69 +157,180 @@ tr:hover {
   </table>
 </div>
 
+<!-- Dialogo para ingresar credenciales -->
+<dialog id="loginDialog">
+  <h2>Ingresar credenciales</h2>
+  <form id="loginFormDialog">
+    <div>
+      <label for="usernameDialog">Usuario:</label>
+      <input type="text" id="usernameDialog" required>
+    </div>
+    <div>
+      <label for="passwordDialog">Contraseña:</label>
+      <input type="password" id="passwordDialog" required>
+    </div>
+    <div>
+      <button type="submit">Confirmar compra</button>
+      <button type="button" id="closeDialogButton" style="margin-left: 10px;">Cerrar</button>
+    </div>
+    <div id="dialogErrorMessage" style="color: red; display: none;">Credenciales incorrectas</div>
+  </form>
+</dialog>
+
+
 <script>
-  // Mostrar/Ocultar menú desplegable
-  const menuButton = document.querySelector('.menu-button');
-  const dropdownMenu = document.querySelector('.dropdown-menu');
+  document.addEventListener("DOMContentLoaded", () => {
+    // Mostrar/Ocultar menú desplegable
+    const menuButton = document.querySelector(".menu-button");
+    const dropdownMenu = document.querySelector(".dropdown-menu");
 
-  menuButton.addEventListener('click', () => {
-      const isVisible = dropdownMenu.style.display === 'block';
-      dropdownMenu.style.display = isVisible ? 'none' : 'block';
-  });
+    menuButton.addEventListener("click", () => {
+      dropdownMenu.style.display =
+        dropdownMenu.style.display === "block" ? "none" : "block";
+    });
 
-  // Personalizar el mensaje de bienvenida con el username
-  const username = localStorage.getItem('username');
-  if (username) {
-      document.getElementById('welcomeMessage').textContent = `Bienvenido, ${username}`;
-  }
+    // Personalizar mensaje de bienvenida
+    const username = localStorage.getItem("username");
+    if (username) {
+      document.getElementById("welcomeMessage").textContent = `Bienvenido, ${username}`;
+    }
 
-  // Mostrar el número de monedas
-  const coins = localStorage.getItem('coins') || 0; // Usar 0 si no hay monedas guardadas
-  const coinsDisplay = document.getElementById('coinsDisplay');
-  coinsDisplay.textContent = `Coins: ${coins}`;
+    // Mostrar monedas
+    const coins = localStorage.getItem("coins") || 0;
+    document.getElementById("coinsDisplay").textContent = `Coins: ${coins}`;
 
-  // Cerrar sesión redirigiendo a la página inicial
-  const logoutButton = document.getElementById('logoutButton');
-  logoutButton.addEventListener('click', (event) => {
+    // Logout
+    document.getElementById("logoutButton").addEventListener("click", (event) => {
       event.preventDefault();
-      localStorage.clear(); // Borra toda la información guardada
-      window.location.href = 'http://localhost:8080/';
-  });
+      localStorage.clear();
+      window.location.href = "http://localhost:8080/";
+    });
 
-  // Ocultar menú si se hace clic fuera
-  document.addEventListener('click', (event) => {
+    // Ocultar menú al hacer clic fuera
+    document.addEventListener("click", (event) => {
       if (!menuButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
-          dropdownMenu.style.display = 'none';
+        dropdownMenu.style.display = "none";
       }
+    });
+
+    // Fetch items
+    fetchItems();
+
+    // Manejo de cierre del diálogo al hacer clic fuera
+    const loginDialog = document.getElementById("loginDialog");
+    loginDialog.addEventListener("click", (event) => {
+      if (event.target === loginDialog) {
+        loginDialog.close();
+      }
+    });
+
+    // Botón para cerrar el diálogo
+    document.getElementById("closeDialogButton").addEventListener("click", () => {
+      loginDialog.close();
+    });
   });
 
-  // Fetch items and populate the table
   async function fetchItems() {
-      try {
-          const response = await fetch('http://localhost:8080/dsaApp/store');
-          const items = await response.json();
-          const tableBody = document.getElementById('itemsTableBody');
-          tableBody.innerHTML = '';
+    try {
+      const response = await fetch("http://localhost:8080/dsaApp/store");
+      const items = await response.json();
+      const tableBody = document.getElementById("itemsTableBody");
+      tableBody.innerHTML = "";
 
-          items.forEach(item => {
-              const row = document.createElement('tr');
-              row.innerHTML = `
-                  <td>${item.id}</td>
-                  <td>${item.name}</td>
-                  <td>${item.description}</td>
-                  <td>${item.price}</td>
-                  <td><a href="${item.imageUrl}" target="_blank"><img src="${item.imageUrl}" alt="${item.name}" class="item-image"></a></td>
-              `;
-              tableBody.appendChild(row);
-          });
-      } catch (error) {
-          console.error('Error fetching items:', error);
-      }
+      items.forEach((item) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${item.id}</td>
+          <td>${item.name}</td>
+          <td>${item.description}</td>
+          <td>${item.price}</td>
+          <td>
+            <a href="${item.imageUrl}" target="_blank">
+              <img src="${item.imageUrl}" alt="${item.name}" class="item-image">
+            </a>
+          </td>
+          <td>
+            <button class="buyButton" data-id="${item.id}" data-price="${item.price}">
+              Comprar
+            </button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      document.querySelectorAll(".buyButton").forEach((button) => {
+        button.addEventListener("click", handleBuyButtonClick);
+      });
+    } catch (error) {
+      console.error("Error fetching items:", error);
+    }
   }
 
-  // Fetch items when the page loads
-  window.onload = fetchItems;
+  function handleBuyButtonClick(event) {
+    const itemId = event.target.getAttribute("data-id");
+
+    // Abrir el diálogo
+    const loginDialog = document.getElementById("loginDialog");
+    loginDialog.showModal();
+
+    // Manejar el envío del formulario
+    const loginFormDialog = document.getElementById("loginFormDialog");
+    const dialogErrorMessage = document.getElementById("dialogErrorMessage");
+
+    loginFormDialog.onsubmit = async (e) => {
+      e.preventDefault();
+      const usernameInput = document.getElementById("usernameDialog").value;
+      const passwordInput = document.getElementById("passwordDialog").value;
+
+      try {
+        // Realizar la compra
+        await buyItem(usernameInput, passwordInput, itemId);
+        dialogErrorMessage.style.display = "none";
+        loginDialog.close();
+      } catch (error) {
+        // Mostrar mensaje de error
+        dialogErrorMessage.style.display = "block";
+        dialogErrorMessage.textContent = error.message; // Mostrar el mensaje real
+        console.error("Error en la compra:", error);
+      }
+    };
+  }
+
+  async function buyItem(usernameInput, passwordInput, itemId) {
+    const requestBody = {
+      user: {
+        username: usernameInput,
+        password: passwordInput,
+      },
+      item: {
+        id: itemId,
+      },
+    };
+
+    const response = await fetch("http://localhost:8080/dsaApp/users/purchase", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const updatedCoins = data.coins;
+
+      // Actualizar monedas en la interfaz
+      document.getElementById("coinsDisplay").textContent = `Coins: ${updatedCoins}`;
+      alert(`Compra exitosa. Monedas restantes: ${updatedCoins}`);
+    } else {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Error en la compra");
+    }
+  }
 </script>
+
 
 </body>
 </html>
+
+

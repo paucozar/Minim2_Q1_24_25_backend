@@ -1,8 +1,12 @@
 package edu.upc.dsa.services;
 
 
+import edu.upc.dsa.StoreManager;
+import edu.upc.dsa.StoreManagerImpl;
 import edu.upc.dsa.UserManager;
 import edu.upc.dsa.UserManagerImpl;
+import edu.upc.dsa.models.Item;
+import edu.upc.dsa.models.PurchaseRequest;
 import edu.upc.dsa.models.User;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -29,6 +33,7 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.ext.Provider;
 import java.io.IOException;
 import java.security.Principal;
+import java.util.Map;
 import java.util.Set;
 
 
@@ -47,6 +52,9 @@ public class UserService extends Application {
 
     private static final Logger logger = Logger.getLogger(UserService.class);
     private UserManager us;
+    private StoreManager sm;
+
+
 
     public UserService() {
         this.us = UserManagerImpl.getInstance();
@@ -55,6 +63,12 @@ public class UserService extends Application {
             this.us.addUser("user1", "User1", "notadmin");
             this.us.addUser("user2", "User2", "notadmin");
             this.us.addUser("PAU", "1234", "notadmin", "Pau", "1", 0, "profilePicture", 20);
+        }
+        this.sm = StoreManagerImpl.getInstance();
+        if (sm.getAllItems().isEmpty()) {
+            this.sm.addItem(new Item("1", "Laptop", "High performance laptop", 1, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGoQDLRQCgfedvcfRBgWol-dXTJ4IpIGgppg&s"));
+            this.sm.addItem(new Item("2", "Smartphone", "Latest model smartphone", 800, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6t0zst_7dmMNi-eJBK58VuHLee0Q5PBQatg&s"));
+            this.sm.addItem(new Item("3", "Headphones", "Noise-cancelling headphones", 150, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2FKeSgIbsF64rqq-7OrmYxyq3k0a-TXnklg&s"));
         }
     }
 
@@ -314,6 +328,61 @@ public class UserService extends Application {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("{\"message\": \"Error interno del servidor\"}").build();
         }
     }
+
+
+    @Path("/purchase")
+        @POST
+        @Consumes(MediaType.APPLICATION_JSON)
+        @Produces(MediaType.APPLICATION_JSON)
+        public Response purchase(PurchaseRequest request) {
+            try {
+                // Obtener los valores de username, password, y itemId desde el requestBody
+                User user = request.getUser();
+                Item item = request.getItem();
+
+                // Buscar el usuario por su nombre de usuario
+                User storedUser = this.us.getUserByUsername(user.getUsername());
+
+                if (storedUser == null || !BCrypt.checkpw(user.getPassword(), storedUser.getPassword())) {
+                    return Response.status(Response.Status.UNAUTHORIZED)
+                            .entity("{\"message\": \"Credenciales incorrectas\"}")
+                            .build();
+                }
+                String id = item.getId();
+
+                Item storedItem = sm.getItembyId(id);
+
+                if (storedItem == null) {
+                    return Response.status(Response.Status.NOT_FOUND)
+                            .entity("{\"message\": \"Item no encontrado\"}")
+                            .build();
+                }
+
+                // Verificar si el usuario tiene suficientes monedas para realizar la compra
+                int userCoins = storedUser.getCoins();
+                if (userCoins < storedItem.getPrice()) {
+                    return Response.status(Response.Status.BAD_REQUEST)
+                            .entity("{\"message\": \"No tienes suficientes monedas para esta compra\"}")
+                            .build();
+                }
+
+                // Realizar la compra (restar monedas)
+                storedUser.setCoins(userCoins - storedItem.getPrice());
+                us.updateUser(storedUser); // Actualizar el usuario en la base de datos
+
+                // Responder con las monedas restantes y el mensaje de éxito
+                return Response.ok()
+                        .entity("{\"message\": \"Compra exitosa\", \"coins\": " + storedUser.getCoins() + "}")
+                        .build();
+            } catch (Exception e) {
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                        .entity("{\"message\": \"Error interno del servidor\"}")
+                        .build();
+            }
+        }
+
+
+
 
 
 }

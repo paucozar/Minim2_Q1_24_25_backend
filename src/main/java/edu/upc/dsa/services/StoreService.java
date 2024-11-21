@@ -1,7 +1,7 @@
 
 package edu.upc.dsa.services;
 
-import edu.upc.dsa.StoreManager;
+import edu.upc.dsa.StoreManagerImpl;
 import edu.upc.dsa.models.Item;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -17,15 +17,19 @@ import java.util.List;
 @Path("/store")
 public class StoreService {
     private static final Logger logger = Logger.getLogger(StoreService.class);
-    private StoreManager sm;
+    private StoreManagerImpl sm;
 
     public StoreService() {
-        this.sm = StoreManager.getInstance();
+        this.sm = StoreManagerImpl.getInstance();
         if (sm.getAllItems().isEmpty()) {
-            this.sm.addItem(new Item("1", "Laptop", "High performance laptop", 1200.00, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGoQDLRQCgfedvcfRBgWol-dXTJ4IpIGgppg&s"));
-            this.sm.addItem(new Item("2", "Smartphone", "Latest model smartphone", 800.00, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6t0zst_7dmMNi-eJBK58VuHLee0Q5PBQatg&s"));
-            this.sm.addItem(new Item("3", "Headphones", "Noise-cancelling headphones", 150.00, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2FKeSgIbsF64rqq-7OrmYxyq3k0a-TXnklg&s"));
+            this.sm.addItem(new Item("1", "Laptop", "High performance laptop", 1, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGoQDLRQCgfedvcfRBgWol-dXTJ4IpIGgppg&s"));
+            this.sm.addItem(new Item("2", "Smartphone", "Latest model smartphone", 800, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6t0zst_7dmMNi-eJBK58VuHLee0Q5PBQatg&s"));
+            this.sm.addItem(new Item("3", "Headphones", "Noise-cancelling headphones", 150, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2FKeSgIbsF64rqq-7OrmYxyq3k0a-TXnklg&s"));
         }
+    }
+
+    public List<Item> getItemsLocal() {
+        return this.sm.getAllItems();
     }
 
     @GET
