@@ -27,6 +27,19 @@
             font-size: 1.5rem;
         }
 
+        .coins-label {
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            background-color: #ffffff;
+            color: #007acc;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: bold;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
         .menu-container {
             position: relative;
         }
@@ -87,6 +100,7 @@
 <body>
 
 <header>
+    <div class="coins-label" id="coinsLabel">Coins: 0</div>
     <h1 id="welcomeMessage">Bienvenido</h1>
     <div class="menu-container">
         <button class="menu-button">Menú</button>
@@ -103,36 +117,39 @@
 </div>
 
 <script>
+    // Mostrar/Ocultar menú desplegable
+    const menuButton = document.querySelector('.menu-button');
+    const dropdownMenu = document.querySelector('.dropdown-menu');
 
-   // Mostrar/Ocultar menú desplegable
-   const menuButton = document.querySelector('.menu-button');
-   const dropdownMenu = document.querySelector('.dropdown-menu');
+    menuButton.addEventListener('click', () => {
+        const isVisible = dropdownMenu.style.display === 'block';
+        dropdownMenu.style.display = isVisible ? 'none' : 'block';
+    });
 
-   menuButton.addEventListener('click', () => {
-       const isVisible = dropdownMenu.style.display === 'block';
-       dropdownMenu.style.display = isVisible ? 'none' : 'block';
-   });
+    // Personalizar el mensaje de bienvenida con el username
+    const username = localStorage.getItem('username');
+    if (username) {
+        document.getElementById('welcomeMessage').textContent = `Bienvenido, ${username}`;
+    }
 
-   // Personalizar el mensaje de bienvenida con el username
-   const username = localStorage.getItem('username');
-   if (username) {
-       document.getElementById('welcomeMessage').textContent = `Bienvenido, ${username}`;
-   }
+    // Mostrar el número de coins del usuario
+    const coins = localStorage.getItem('coins') || 0;
+    document.getElementById('coinsLabel').textContent = `Coins: ${coins}`;
 
-   // Cerrar sesión redirigiendo a la página inicial
-   const logoutButton = document.getElementById('logoutButton');
-   logoutButton.addEventListener('click', (event) => {
-       event.preventDefault();
-       localStorage.clear(); // Borra toda la información guardada
-       window.location.href = 'http://localhost:8080/';
-   });
+    // Cerrar sesión redirigiendo a la página inicial
+    const logoutButton = document.getElementById('logoutButton');
+    logoutButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        localStorage.clear(); // Borra toda la información guardada
+        window.location.href = 'http://localhost:8080/';
+    });
 
-   // Ocultar menú si se hace clic fuera
-   document.addEventListener('click', (event) => {
-       if (!menuButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
-           dropdownMenu.style.display = 'none';
-       }
-   });
+    // Ocultar menú si se hace clic fuera
+    document.addEventListener('click', (event) => {
+        if (!menuButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+            dropdownMenu.style.display = 'none';
+        }
+    });
 </script>
 
 </body>

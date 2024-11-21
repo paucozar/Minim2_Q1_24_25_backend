@@ -11,6 +11,7 @@ public class User {
     private String email;
     private int age;
     private String profilePicture; // URL o path de la imagen de perfil
+    private int coins;
 
     public User() {
         this.setId(RandomUtils.getId());
@@ -24,12 +25,13 @@ public class User {
         this.isAdmin = isAdmin;
     }
 
-    public User(String username, String password, String isAdmin, String fullName, String email, int age, String profilePicture) {
+    public User(String username, String password, String isAdmin, String fullName, String email, int age, String profilePicture, int coins) {
         this(username, password, isAdmin);
         this.fullName = fullName;
         this.email = email;
         this.age = age;
         this.profilePicture = profilePicture;
+        this.coins = 0;
     }
 
     // Getters y Setters
@@ -97,9 +99,17 @@ public class User {
         this.profilePicture = profilePicture;
     }
 
+    public int getCoins() {
+        return coins;
+    }
+
+    public void setCoins(int coins) {
+        this.coins = coins;
+    }
+
     @Override
     public String toString() {
         return "User [id=" + id + ", username=" + username + ", password=" + password + ", fullName=" + fullName +
-                ", email=" + email + ", age=" + age + ", profilePicture=" + profilePicture + "]";
+                ", email=" + email + ", age=" + age + ", profilePicture=" + profilePicture + "coins=" + coins + "]";
     }
 }

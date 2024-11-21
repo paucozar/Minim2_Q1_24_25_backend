@@ -5,6 +5,7 @@ public class Item implements Comparable<Item> {
     private String name;
     private String description;
     private double price;
+    private String imagen;
 
     public Item() {}
 
@@ -45,6 +46,14 @@ public class Item implements Comparable<Item> {
 
     public void setPrice(double price) {
         this.price = price;
+    }
+
+    public String getImagen() {
+        return imagen;
+    }
+
+    public void setImagen(String imagen) {
+        this.imagen = imagen;
     }
 
     @Override

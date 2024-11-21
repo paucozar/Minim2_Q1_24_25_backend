@@ -103,6 +103,8 @@
             <input type="text" id="registerUsername" placeholder="Ingresa tu usuario" required>
             <label for="registerPassword">Contraseña:</label>
             <input type="password" id="registerPassword" placeholder="Ingresa tu contraseña" required>
+            <label for="confirmPassword">Confirmar contraseña:</label>
+            <input type="password" id="confirmPassword" placeholder="Confirma tu contraseña" required>
             <button type="submit">Registrarse</button>
         </form>
         <div id="registerResult" class="result"></div>
@@ -135,6 +137,12 @@
         event.preventDefault();
         const username = document.getElementById('registerUsername').value;
         const password = document.getElementById('registerPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (password !== confirmPassword) {
+            showMessage('registerResult', 'Las contraseñas no coinciden, inténtelo de nuevo', 'error');
+            return;
+        }
 
         fetch('http://localhost:8080/dsaApp/users', {
             method: 'POST',
@@ -148,7 +156,7 @@
             return response.text();
         })
         .then(data => {
-            showMessage('registerResult', 'Registro exitoso: ' + data, 'success');
+            showMessage('registerResult', '¡Registro exitoso!' , 'success');
         })
         .catch(error => {
             showMessage('registerResult', error, 'error');
@@ -159,11 +167,12 @@
         event.preventDefault();
         const username = document.getElementById('loginUsername').value;
         const password = document.getElementById('loginPassword').value;
+        const coins = 0;
 
         fetch('http://localhost:8080/dsaApp/users/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password, coins })
         })
         .then(response => {
             if (!response.ok) {
@@ -172,13 +181,14 @@
             return response.json();
         })
         .then(data => {
-            showMessage('loginResult', 'Login exitoso. Redirigiendo...', 'success');
+            showMessage('loginResult', '¡Login exitoso! Iniciando sesión', 'success');
             localStorage.setItem('username', username);
             localStorage.setItem('role', data.role);
+            localStorage.setItem('coins', coins);
             setTimeout(() => window.location.href = data.redirect, 1500);
         })
         .catch(error => {
-            showMessage('loginResult', error, 'error');
+            showMessage('loginResult', 'Contraseña incorrecta, inténtelo de nuevo' , 'error');
         });
     });
 </script>

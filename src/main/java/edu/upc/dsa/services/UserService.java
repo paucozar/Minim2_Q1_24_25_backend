@@ -54,6 +54,7 @@ public class UserService extends Application {
             this.us.addUser("Admin", "admin", "admin");
             this.us.addUser("user1", "User1", "notadmin");
             this.us.addUser("user2", "User2", "notadmin");
+            this.us.addUser("PAU", "1234", "notadmin", "Pau", "1", 0, "profilePicture", 20);
         }
     }
 
@@ -302,10 +303,10 @@ public class UserService extends Application {
             }
 
             String role = storedUser.getIsAdmin().equals("admin") ? "admin" : "user";
+            int coins = 0;
 
             return Response.ok()
-                    .entity("{\"message\": \"Login exitoso\", \"role\": \"" + role + "\", \"redirect\": \"" + (role.equals("admin") ? "admin.html" : "user.html") + "\"}")
-                    .build();
+                    .entity("{\"message\": \"Login exitoso\", \"role\": \"" + role + "\", \"coins\": " + coins + ", \"redirect\": \"" + (role.equals("admin") ? "admin.html" : "user.html") + "\"}")                    .build();
         } catch (Exception e) {
             logger.error("Error al iniciar sesión: " + e.getMessage());
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("{\"message\": \"Error interno del servidor\"}").build();

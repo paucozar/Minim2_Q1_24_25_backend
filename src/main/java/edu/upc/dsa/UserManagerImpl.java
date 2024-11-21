@@ -36,7 +36,7 @@ public class UserManagerImpl implements UserManager {
     }
 
     @Override
-    public User addUser(String username, String password, String isAdmin, String fullName, String email, int age, String profilePicture) {
+    public User addUser(String username, String password, String isAdmin, String fullName, String email, int age, String profilePicture, int coins) {
         // Verificar si la contraseña no está vacía antes de encriptar
         if (password == null || password.trim().isEmpty()) {
             logger.warn("Contraseña vacía para el usuario: " + username);
@@ -44,7 +44,7 @@ public class UserManagerImpl implements UserManager {
         }
         String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
         // Crear un nuevo usuario con los parámetros adicionales
-        return this.addUsers(new User(username, hashedPassword, isAdmin, fullName, email, age, profilePicture));
+        return this.addUsers(new User(username, hashedPassword, isAdmin, fullName, email, age, profilePicture, coins));
     }
 
     public User addUser(String username, String password, String isAdmin) {
@@ -55,7 +55,7 @@ public class UserManagerImpl implements UserManager {
         }
         String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
         // Crear un nuevo usuario con los parámetros adicionales
-        return this.addUsers(new User(username, hashedPassword, isAdmin, null, null, 0, null));
+        return this.addUsers(new User(username, hashedPassword, isAdmin, null, null, 0, null, 0));
     }
 
 
