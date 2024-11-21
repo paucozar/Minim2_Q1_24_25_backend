@@ -1,3 +1,4 @@
+
 package edu.upc.dsa.services;
 
 import edu.upc.dsa.StoreManager;
@@ -21,9 +22,9 @@ public class StoreService {
     public StoreService() {
         this.sm = StoreManager.getInstance();
         if (sm.getAllItems().isEmpty()) {
-            this.sm.addItem(new Item("1", "Laptop", "High performance laptop", 1200.00));
-            this.sm.addItem(new Item("2", "Smartphone", "Latest model smartphone", 800.00));
-            this.sm.addItem(new Item("3", "Headphones", "Noise-cancelling headphones", 150.00));
+            this.sm.addItem(new Item("1", "Laptop", "High performance laptop", 1200.00, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGoQDLRQCgfedvcfRBgWol-dXTJ4IpIGgppg&s"));
+            this.sm.addItem(new Item("2", "Smartphone", "Latest model smartphone", 800.00, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6t0zst_7dmMNi-eJBK58VuHLee0Q5PBQatg&s"));
+            this.sm.addItem(new Item("3", "Headphones", "Noise-cancelling headphones", 150.00, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2FKeSgIbsF64rqq-7OrmYxyq3k0a-TXnklg&s"));
         }
     }
 

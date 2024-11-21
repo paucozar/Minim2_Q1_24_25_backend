@@ -52,15 +52,15 @@
 <script>
     // Recuperar los datos del usuario desde la API y mostrar en el formulario
   $(document).ready(function() {
-      const username = "user1"; // Aquí deberías usar el nombre de usuario autenticado
+      const username = localStorage.getItem('username'); // Aquí deberías usar el nombre de usuario autenticado
       $.get(`/dsaApp/users/${username}`, function(user) {
           // Rellenar el formulario con los datos del usuario
           $('#fullName').val(user.fullName);
           $('#email').val(user.email);
           $('#age').val(user.age);
           // Actualizar el título de la página con el nombre del usuario
-          $('#pageTitle').text(`Perfil de ${user.username}`);
-          $('#profileHeading').text(`Bienvenido, ${user.username}`);
+          $('#pageTitle').text(`Perfil de ${username}`);
+          $('#profileHeading').text(`Bienvenido, ${username}`);
       });
 
       // Manejar el envío del formulario

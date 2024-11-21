@@ -3,154 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Página de Usuario</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f9fc;
-            margin: 0;
-            padding: 0;
-            color: #333;
-        }
-
-        header {
-            background-color: #007acc;
-            color: white;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 1.5rem;
-        }
-
-        .coins-label {
-            position: absolute;
-            top: 10px;
-            left: 20px;
-            background-color: #ffffff;
-            color: #007acc;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 1rem;
-            font-weight: bold;
-            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .menu-container {
-            position: relative;
-        }
-
-        .menu-button {
-            background-color: #005f99;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-
-        .menu-button:hover {
-            background-color: #004577;
-        }
-
-        .dropdown-menu {
-            position: absolute;
-            right: 0;
-            top: 50px;
-            background-color: white;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            border-radius: 5px;
-            display: none;
-            flex-direction: column;
-            min-width: 150px;
-        }
-
-        .dropdown-menu a {
-            text-decoration: none;
-            padding: 10px 15px;
-            color: #333;
-            display: block;
-            font-size: 1rem;
-        }
-
-        .dropdown-menu a:hover {
-            background-color: #f4f9fc;
-            color: #007acc;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 20px;
-            background-color: white;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 5px;
-        }
-
-        p {
-            color: #555;
-        }
-    </style>
+    <title id="pageTitle">Perfil de Usuario</title>
+    <!-- Enlace al archivo CSS -->
+    <link rel="stylesheet" href="style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-
-<header>
-    <div class="coins-label" id="coinsLabel">Coins: 0</div>
-    <h1 id="welcomeMessage">Bienvenido</h1>
-    <div class="menu-container">
-        <button class="menu-button">Menú</button>
-        <div class="dropdown-menu">
-            <a href="http://localhost:8080/profile.html">Ver Perfil</a>
-            <a href="http://localhost:8080/tienda.xml.html">Tienda</a>
-            <a href="#" id="logoutButton" style="color: #dc3545;">Cerrar Sesión</a>
+<!-- Contenedor principal -->
+<div class="container">
+    <!-- Menú de navegación lateral -->
+    <div class="sidebar">
+        <div class="menu">
+            <h2>Menú</h2>
+            <ul>
+                <li><a href="user.html">Inicio</a></li>
+                <li><a href="profile.html" class="active">Perfil</a></li>
+                <li><a href="index.html">Cerrar sesión</a></li>
+                <li><a href="tienda.xml.html">Tienda</a></li>
+            </ul>
         </div>
     </div>
-</header>
 
-<div class="container">
-    <p>Has iniciado sesión correctamente. Aquí puedes gestionar las funciones de tu cuenta y acceder a configuraciones.</p>
+    <!-- Contenido principal -->
+    <div class="main-content">
+        <h1 id="profileHeading">Perfil de Usuario</h1>
+        <form id="profileForm">
+            <div class="form-group">
+                <label for="fullName">Nombre Completo:</label>
+                <input type="text" id="fullName" name="fullName" value="" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Correo Electrónico:</label>
+                <input type="email" id="email" name="email" value="" required>
+            </div>
+            <div class="form-group">
+                <label for="age">Edad:</label>
+                <input type="number" id="age" name="age" value="" required>
+            </div>
+            <div class="form-group">
+                <label for="profilePictureUrl">URL de la Foto de Perfil:</label>
+                <input type="text" id="profilePictureUrl" name="profilePictureUrl" value="" required>
+            </div>
+            <div class="form-group">
+                <img id="profilePicture" src="" alt="Foto de Perfil" style="width: 150px; height: auto; display: none;">
+            </div>
+            <button type="submit" class="btn">Guardar Cambios</button>
+        </form>
+    </div>
 </div>
 
 <script>
-    // Mostrar/Ocultar menú desplegable
-    const menuButton = document.querySelector('.menu-button');
-    const dropdownMenu = document.querySelector('.dropdown-menu');
+    $(document).ready(function() {
+        const username = "user1"; // Aquí deberías usar el nombre de usuario autenticado
+        $.get(`/dsaApp/users/${username}`, function(user) {
+            $('#fullName').val(user.fullName);
+            $('#email').val(user.email);
+            $('#age').val(user.age);
+            const profilePictureUrl = localStorage.getItem('profilePictureUrl');
+            if (profilePictureUrl) {
+                $('#profilePictureUrl').val(profilePictureUrl);
+                $('#profilePicture').attr('src', profilePictureUrl).show();
+            }
+            $('#pageTitle').text(`Perfil de ${user.username}`);
+            $('#profileHeading').text(`Bienvenido, ${user.username}`);
+        });
 
-    menuButton.addEventListener('click', () => {
-        const isVisible = dropdownMenu.style.display === 'block';
-        dropdownMenu.style.display = isVisible ? 'none' : 'block';
-    });
+        $('#profileForm').submit(function(event) {
+            event.preventDefault();
 
-    // Personalizar el mensaje de bienvenida con el username
-    const username = localStorage.getItem('username');
-    if (username) {
-        document.getElementById('welcomeMessage').textContent = `Bienvenido, ${username}`;
-    }
+            var fullName = $('#fullName').val();
+            var email = $('#email').val();
+            var age = $('#age').val();
+            var profilePictureUrl = $('#profilePictureUrl').val();
+            var username = localStorage.getItem('username');
 
-    // Mostrar el número de coins del usuario
-    const coins = localStorage.getItem('coins') || 0;
-    document.getElementById('coinsLabel').textContent = `Coins: ${coins}`;
+            var profileData = {
+                fullName: fullName,
+                email: email,
+                age: parseInt(age)
+            };
 
-    // Cerrar sesión redirigiendo a la página inicial
-    const logoutButton = document.getElementById('logoutButton');
-    logoutButton.addEventListener('click', (event) => {
-        event.preventDefault();
-        localStorage.clear(); // Borra toda la información guardada
-        window.location.href = 'http://localhost:8080/';
-    });
-
-    // Ocultar menú si se hace clic fuera
-    document.addEventListener('click', (event) => {
-        if (!menuButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
-            dropdownMenu.style.display = 'none';
-        }
+            fetch(`http://localhost:8080/dsaApp/users/${username}/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(profileData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Perfil actualizado con éxito');
+                    localStorage.setItem('profilePictureUrl', profilePictureUrl);
+                    $('#profilePicture').attr('src', profilePictureUrl).show();
+                } else {
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.message || 'Hubo un error al actualizar el perfil');
+                    });
+                }
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+        });
     });
 </script>
-
 </body>
 </html>

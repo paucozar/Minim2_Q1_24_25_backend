@@ -5,15 +5,16 @@ public class Item implements Comparable<Item> {
     private String name;
     private String description;
     private double price;
-    private String imagen;
+    private String imageUrl;
 
     public Item() {}
 
-    public Item(String id, String name, String description, double price) {
+    public Item(String id, String name, String description, double price, String imageUrl) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.price = price;
+        this.imageUrl = imageUrl;
     }
 
     public String getId() {
@@ -48,12 +49,12 @@ public class Item implements Comparable<Item> {
         this.price = price;
     }
 
-    public String getImagen() {
-        return imagen;
+    public String getImageUrl() {
+        return imageUrl;
     }
 
-    public void setImagen(String imagen) {
-        this.imagen = imagen;
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     @Override

@@ -1,3 +1,4 @@
+
 package edu.upc.dsa;
 
 import edu.upc.dsa.models.Item;
@@ -12,9 +13,9 @@ public class StoreManager {
     private StoreManager() {
         items = new ArrayList<>();
         // Initialize with some items if necessary
-        items.add(new Item("1", "Laptop", "High performance laptop", 1200.00));
-        items.add(new Item("2", "Smartphone", "Latest model smartphone", 800.00));
-        items.add(new Item("3", "Headphones", "Noise-cancelling headphones", 150.00));
+        items.add(new Item("1", "Laptop", "High performance laptop", 1200.00, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGoQDLRQCgfedvcfRBgWol-dXTJ4IpIGgppg&s"));
+        items.add(new Item("2", "Smartphone", "Latest model smartphone", 800.00, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6t0zst_7dmMNi-eJBK58VuHLee0Q5PBQatg&s"));
+        items.add(new Item("3", "Headphones", "Noise-cancelling headphones", 150.00, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2FKeSgIbsF64rqq-7OrmYxyq3k0a-TXnklg&s"));
     }
 
     public static StoreManager getInstance() {
