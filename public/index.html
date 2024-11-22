@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prueba de API - Login y Registro</title>
+    <title>Login y Registro</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -93,7 +93,7 @@
 </head>
 <body>
 <header>
-    Prueba de API - Login y Registro
+    Login y Registro
 </header>
 <main>
     <section>
@@ -139,6 +139,14 @@
         const password = document.getElementById('registerPassword').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
 
+        if (username.trim() === '') {
+            showMessage('registerResult', 'El nombre de usuario no puede estar vacío', 'error');
+            return;
+        }
+        if (password.trim() === '') {
+            showMessage('registerResult', 'La contraseña no puede estar vacía', 'error');
+            return;
+        }
         if (password !== confirmPassword) {
             showMessage('registerResult', 'Las contraseñas no coinciden, inténtelo de nuevo', 'error');
             return;
@@ -151,7 +159,7 @@
         })
         .then(response => {
             if (!response.ok) {
-                return Promise.reject('Error: ' + response.status + ' - ' + response.statusText);
+                return Promise.reject('Nombre de usuario ya en uso');
             }
             return response.text();
         })

@@ -62,7 +62,6 @@ public class UserService extends Application {
             this.us.addUser("Admin", "admin", "admin");
             this.us.addUser("user1", "User1", "notadmin");
             this.us.addUser("user2", "User2", "notadmin");
-            this.us.addUser("PAU", "1234", "notadmin", "Pau", "1", 0, "profilePicture", 20);
         }
         this.sm = StoreManagerImpl.getInstance();
         if (sm.getAllItems().isEmpty()) {
@@ -71,6 +70,12 @@ public class UserService extends Application {
             this.sm.addItem(new Item("3", "Headphones", "Noise-cancelling headphones", 150, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2FKeSgIbsF64rqq-7OrmYxyq3k0a-TXnklg&s"));
         }
     }
+
+    public boolean isUsernameTaken(String username){
+        User user = this.us.getUserByUsername(username);
+        return user != null;
+    }
+
 
     @Provider
     @Priority(Priorities.AUTHENTICATION)
@@ -292,6 +297,9 @@ public class UserService extends Application {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response newUser(User user) {
         if (user.getPassword() == null || user.getUsername() == null) {
+            return Response.status(500).entity(user).build();
+        }
+        else if (isUsernameTaken(user.getUsername())) {
             return Response.status(500).entity(user).build();
         }
         this.us.addUser(user.getUsername(), user.getPassword(), user.getIsAdmin());
