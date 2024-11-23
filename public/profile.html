@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -27,6 +28,7 @@
     <!-- Contenido principal -->
     <div class="main-content">
         <h1 id="profileHeading">Perfil de Usuario</h1>
+        <img id="profilePicture" src="" alt="Foto de Perfil" style="width: 200px; height: auto; display: none; margin-bottom: 20px;">
         <form id="profileForm">
             <div class="form-group">
                 <label for="fullName">Nombre Completo:</label>
@@ -41,8 +43,8 @@
                 <input type="number" id="age" name="age" value="" required>
             </div>
             <div class="form-group">
-                <label for="profilePicture">Foto de Perfil:</label>
-                <input type="file" id="profilePicture" name="profilePicture" accept="image/*">
+                <label for="profilePictureUrl">URL de la Foto de Perfil:</label>
+                <input type="text" id="profilePictureUrl" name="profilePictureUrl" value="" required>
             </div>
             <button type="submit" class="btn">Guardar Cambios</button>
         </form>
@@ -50,59 +52,59 @@
 </div>
 
 <script>
-    // Recuperar los datos del usuario desde la API y mostrar en el formulario
-  $(document).ready(function() {
-      const username = localStorage.getItem('username'); // Aquí deberías usar el nombre de usuario autenticado
-      $.get(`/dsaApp/users/${username}`, function(user) {
-          // Rellenar el formulario con los datos del usuario
-          $('#fullName').val(user.fullName);
-          $('#email').val(user.email);
-          $('#age').val(user.age);
-          // Actualizar el título de la página con el nombre del usuario
-          $('#pageTitle').text(`Perfil de ${username}`);
-          $('#profileHeading').text(`Bienvenido, ${username}`);
-      });
+    $(document).ready(function() {
+        const username = localStorage.getItem('username'); // Aquí deberías usar el nombre de usuario autenticado
+        $.get(`/dsaApp/users/${username}`, function(user) {
+            $('#fullName').val(user.fullName);
+            $('#email').val(user.email);
+            $('#age').val(user.age);
+            const profilePictureUrl = user.profilePicture; // Obtener la URL de la foto de perfil del servidor
+            if (profilePictureUrl) {
+                $('#profilePictureUrl').val(profilePictureUrl);
+                $('#profilePicture').attr('src', profilePictureUrl).show();
+            }
+            $('#pageTitle').text(`Perfil de ${username}`);
+            $('#profileHeading').text(`Bienvenido, ${username}`);
+        });
 
-      // Manejar el envío del formulario
-     $('#profileForm').submit(function(event) {
-    event.preventDefault();
+        $('#profileForm').submit(function(event) {
+            event.preventDefault();
 
-    // Obtener los valores del formulario
-    var fullName = $('#fullName').val();
-    var email = $('#email').val();
-    var age = $('#age').val();
-    var username = localStorage.getItem('username'); // Asegúrate de obtener el valor correcto del username
+            var fullName = $('#fullName').val();
+            var email = $('#email').val();
+            var age = $('#age').val();
+            var profilePictureUrl = $('#profilePictureUrl').val();
+            var username = localStorage.getItem('username');
 
-    // Crear un objeto con los datos para actualizar el perfil
-    var profileData = {
-        fullName: fullName,
-        email: email,
-        age: parseInt(age)  // Asegúrate de convertir el campo age a un número entero
-    };
+            var profileData = {
+                fullName: fullName,
+                email: email,
+                age: parseInt(age),
+                profilePicture: profilePictureUrl // Incluir la URL de la foto de perfil en los datos del perfil
+            };
 
-    // Usar fetch para hacer la solicitud PUT con los datos en JSON
-    fetch(`http://localhost:8080/dsaApp/users/${username}/profile`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json'  // Especificar que se está enviando JSON
-        },
-        body: JSON.stringify(profileData)  // Convertir el objeto de datos a JSON
-    })
-    .then(response => {
-        if (response.ok) {
-            alert('Perfil actualizado con éxito');
-        } else {
-            return response.json().then(errorData => {
-                throw new Error(errorData.message || 'Hubo un error al actualizar el perfil');
+            fetch(`http://localhost:8080/dsaApp/users/${username}/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(profileData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Perfil actualizado con éxito');
+                    $('#profilePicture').attr('src', profilePictureUrl).show();
+                } else {
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.message || 'Hubo un error al actualizar el perfil');
+                    });
+                }
+            })
+            .catch(error => {
+                alert(error.message);
             });
-        }
-    })
-    .catch(error => {
-        alert(error.message);
+        });
     });
-    });
- });
-
 </script>
 </body>
 </html>

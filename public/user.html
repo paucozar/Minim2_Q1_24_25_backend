@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inicio</title>
+    <title>Dashboard</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -26,14 +27,17 @@
             font-size: 1.5rem;
         }
         .coins-display {
-            margin-right: -950px; /* Espacio entre el label Coins y el botón del menú */
-            font-size: 1rem;
-            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 120px;
+            background-color: #004577;
             color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 1rem;
         }
         .menu-container {
-            display: flex;
-            align-items: center;
+            position: relative;
         }
         .menu-button {
             background-color: #005f99;
@@ -96,7 +100,7 @@
     </div>
 </header>
 <div class="container">
-    <p>Has iniciado sesión correctamente. Aquí puedes gestionar las funciones de tu cuenta y acceder a configuraciones.</p>
+    <p>Has iniciado sesion correctamente. Aqui puedes gestionar las funciones de tu cuenta y acceder a configuraciones.</p>
 </div>
 
 <script>
@@ -118,6 +122,15 @@
     const coins = localStorage.getItem('coins') || 0; // Usar 0 si no hay monedas guardadas
     const coinsDisplay = document.getElementById('coinsDisplay');
     coinsDisplay.textContent = `Coins: ${coins}`;
+
+    // Verificar si el usuario ha iniciado sesión antes
+    const userLoggedInBefore = localStorage.getItem('userLoggedInBefore');
+    if (!userLoggedInBefore) {
+        localStorage.clear(); // Borra toda la información guardada
+        localStorage.setItem('username', username); // Guardar el nombre de usuario actual
+        localStorage.setItem('userLoggedInBefore', 'true'); // Marcar que el usuario ha iniciado sesión
+        window.location.reload(); // Recargar la página para aplicar los cambios
+    }
 
     // Cerrar sesión redirigiendo a la página inicial
     const logoutButton = document.getElementById('logoutButton');

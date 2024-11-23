@@ -176,11 +176,10 @@
         const username = document.getElementById('loginUsername').value;
         const password = document.getElementById('loginPassword').value;
 
-
         fetch('http://localhost:8080/dsaApp/users/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password})
+            body: JSON.stringify({ username, password })
         })
         .then(response => {
             if (!response.ok) {

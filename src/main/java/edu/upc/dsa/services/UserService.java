@@ -1,5 +1,5 @@
-package edu.upc.dsa.services;
 
+package edu.upc.dsa.services;
 
 import edu.upc.dsa.StoreManager;
 import edu.upc.dsa.StoreManagerImpl;
@@ -36,7 +36,6 @@ import java.security.Principal;
 import java.util.Map;
 import java.util.Set;
 
-
 @Api(value = "/users", description = "Endpoint to user Service")
 @Path("/users")
 @Produces(MediaType.APPLICATION_JSON)
@@ -54,6 +53,10 @@ public class UserService extends Application {
     private UserManager us;
     private StoreManager sm;
 
+    public boolean isUsernameTaken(String username){
+        User user = this.us.getUserByUsername(username);
+        return user != null;
+    }
 
 
     public UserService() {
@@ -62,6 +65,7 @@ public class UserService extends Application {
             this.us.addUser("Admin", "admin", "admin");
             this.us.addUser("user1", "User1", "notadmin");
             this.us.addUser("user2", "User2", "notadmin");
+            this.us.addUser("PAU", "1234", "notadmin", "Pau", "1", 0, "profilePicture", 20);
         }
         this.sm = StoreManagerImpl.getInstance();
         if (sm.getAllItems().isEmpty()) {
@@ -70,12 +74,6 @@ public class UserService extends Application {
             this.sm.addItem(new Item("3", "Headphones", "Noise-cancelling headphones", 150, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2FKeSgIbsF64rqq-7OrmYxyq3k0a-TXnklg&s"));
         }
     }
-
-    public boolean isUsernameTaken(String username){
-        User user = this.us.getUserByUsername(username);
-        return user != null;
-    }
-
 
     @Provider
     @Priority(Priorities.AUTHENTICATION)
@@ -125,13 +123,11 @@ public class UserService extends Application {
         }
     }
 
-
     @GET
     @ApiOperation(value = "get all User", notes = "asdasd")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Successful", response = User.class, responseContainer = "List"),
     })
-    // Elimina @Path("/") porque ya tienes /tracks a nivel de clase
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUser() {
         List<User> users = this.us.findAll();
@@ -167,7 +163,6 @@ public class UserService extends Application {
         if (u == null) return Response.status(404).build();
         else return Response.status(201).entity(u).build();
     }
-
 
     @DELETE
     @ApiOperation(value = "delete a User", notes = "Elimina un usuario específico si es un administrador")
@@ -221,7 +216,6 @@ public class UserService extends Application {
         }
     }
 
-
     @PUT
     @Path("/{username}")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -242,14 +236,13 @@ public class UserService extends Application {
 
     @PUT
     @Path("/{username}/profile")
-    @Consumes(MediaType.APPLICATION_JSON) // Cambiado a JSON
+    @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "update a User profile", notes = "Permite a un usuario actualizar su perfil")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Perfil actualizado exitosamente"),
             @ApiResponse(code = 404, message = "Usuario no encontrado")
     })
-    public Response updateUserProfile(@PathParam("username") String username,
-                                      User userProfileUpdate) { // Recibe el JSON mapeado a un objeto Java
+    public Response updateUserProfile(@PathParam("username") String username, User userProfileUpdate) {
         try {
             // Obtener el usuario actual
             User existingUser = this.us.getUserByUsername(username);
@@ -270,6 +263,9 @@ public class UserService extends Application {
             if (userProfileUpdate.getAge() != 0) {
                 existingUser.setAge(userProfileUpdate.getAge());
             }
+            if (userProfileUpdate.getProfilePicture() != null) {
+                existingUser.setProfilePicture(userProfileUpdate.getProfilePicture());
+            }
 
             // Actualizar el usuario en el sistema
             this.us.updateUser(existingUser);
@@ -286,12 +282,11 @@ public class UserService extends Application {
         }
     }
 
-
-
     @POST
     @ApiOperation(value = "create a new User", notes = "asdasd")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Successful", response=User.class),
+            @ApiResponse(code = 409, message = "Username already exists"),
             @ApiResponse(code = 500, message = "Validation Error")
     })
     @Consumes(MediaType.APPLICATION_JSON)
@@ -299,14 +294,17 @@ public class UserService extends Application {
         if (user.getPassword() == null || user.getUsername() == null) {
             return Response.status(500).entity(user).build();
         }
+        User existingUser = this.us.getUserByUsername(user.getUsername());
+        if (existingUser != null) {
+            return Response.status(409).entity("{\"message\": \"Username already exists\"}").build();
+        }
         else if (isUsernameTaken(user.getUsername())) {
             return Response.status(500).entity(user).build();
         }
+
         this.us.addUser(user.getUsername(), user.getPassword(), user.getIsAdmin());
         return Response.status(201).entity(user).build();
     }
-
-
     @POST
     @ApiOperation(value = "login a User", notes = "Login a user with username and password")
     @ApiResponses(value = {
@@ -328,69 +326,63 @@ public class UserService extends Application {
             String role = storedUser.getIsAdmin().equals("admin") ? "admin" : "user";
             int coins = storedUser.getCoins();
 
-
             return Response.ok()
-                    .entity("{\"message\": \"Login exitoso\", \"role\": \"" + role + "\", \"coins\": " + coins + ", \"redirect\": \"" + (role.equals("admin") ? "admin.html" : "user.html") + "\"}")                    .build();
+                    .entity("{\"message\": \"Login exitoso\", \"role\": \"" + role + "\", \"coins\": " + coins + ", \"redirect\": \"" + (role.equals("admin") ? "admin.html" : "user.html") + "\"}")
+                    .build();
         } catch (Exception e) {
             logger.error("Error al iniciar sesión: " + e.getMessage());
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("{\"message\": \"Error interno del servidor\"}").build();
         }
     }
 
-
     @Path("/purchase")
-        @POST
-        @Consumes(MediaType.APPLICATION_JSON)
-        @Produces(MediaType.APPLICATION_JSON)
-        public Response purchase(PurchaseRequest request) {
-            try {
-                // Obtener los valores de username, password, y itemId desde el requestBody
-                User user = request.getUser();
-                Item item = request.getItem();
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response purchase(PurchaseRequest request) {
+        try {
+            // Obtener los valores de username, password, y itemId desde el requestBody
+            User user = request.getUser();
+            Item item = request.getItem();
 
-                // Buscar el usuario por su nombre de usuario
-                User storedUser = this.us.getUserByUsername(user.getUsername());
+            // Buscar el usuario por su nombre de usuario
+            User storedUser = this.us.getUserByUsername(user.getUsername());
 
-                if (storedUser == null || !BCrypt.checkpw(user.getPassword(), storedUser.getPassword())) {
-                    return Response.status(Response.Status.UNAUTHORIZED)
-                            .entity("{\"message\": \"Credenciales incorrectas\"}")
-                            .build();
-                }
-                String id = item.getId();
-
-                Item storedItem = sm.getItembyId(id);
-
-                if (storedItem == null) {
-                    return Response.status(Response.Status.NOT_FOUND)
-                            .entity("{\"message\": \"Item no encontrado\"}")
-                            .build();
-                }
-
-                // Verificar si el usuario tiene suficientes monedas para realizar la compra
-                int userCoins = storedUser.getCoins();
-                if (userCoins < storedItem.getPrice()) {
-                    return Response.status(Response.Status.BAD_REQUEST)
-                            .entity("{\"message\": \"No tienes suficientes monedas para esta compra\"}")
-                            .build();
-                }
-
-                // Realizar la compra (restar monedas)
-                storedUser.setCoins(userCoins - storedItem.getPrice());
-                us.updateUser(storedUser); // Actualizar el usuario en la base de datos
-
-                // Responder con las monedas restantes y el mensaje de éxito
-                return Response.ok()
-                        .entity("{\"message\": \"Compra exitosa\", \"coins\": " + storedUser.getCoins() + "}")
-                        .build();
-            } catch (Exception e) {
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                        .entity("{\"message\": \"Error interno del servidor\"}")
+            if (storedUser == null || !BCrypt.checkpw(user.getPassword(), storedUser.getPassword())) {
+                return Response.status(Response.Status.UNAUTHORIZED)
+                        .entity("{\"message\": \"Credenciales incorrectas\"}")
                         .build();
             }
+            String id = item.getId();
+
+            Item storedItem = sm.getItembyId(id);
+
+            if (storedItem == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                        .entity("{\"message\": \"Item no encontrado\"}")
+                        .build();
+            }
+
+            // Verificar si el usuario tiene suficientes monedas para realizar la compra
+            int userCoins = storedUser.getCoins();
+            if (userCoins < storedItem.getPrice()) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("{\"message\": \"No tienes suficientes monedas para esta compra\"}")
+                        .build();
+            }
+
+            // Realizar la compra (restar monedas)
+            storedUser.setCoins(userCoins - storedItem.getPrice());
+            us.updateUser(storedUser); // Actualizar el usuario en la base de datos
+
+            // Responder con las monedas restantes y el mensaje de éxito
+            return Response.ok()
+                    .entity("{\"message\": \"Compra exitosa\", \"coins\": " + storedUser.getCoins() + "}")
+                    .build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("{\"message\": \"Error interno del servidor\"}")
+                    .build();
         }
-
-
-
-
-
+    }
 }
