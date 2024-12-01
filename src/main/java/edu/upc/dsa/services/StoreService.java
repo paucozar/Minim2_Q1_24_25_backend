@@ -1,6 +1,7 @@
 
 package edu.upc.dsa.services;
 
+import edu.upc.dsa.DBUtils;
 import edu.upc.dsa.StoreManagerImpl;
 import edu.upc.dsa.models.Item;
 import io.swagger.annotations.Api;
@@ -11,6 +12,11 @@ import org.apache.log4j.Logger;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Api(value = "/store", description = "Endpoint to Store Service")
@@ -20,16 +26,16 @@ public class StoreService {
     private StoreManagerImpl sm;
 
     public StoreService() {
-        this.sm = StoreManagerImpl.getInstance();
-        if (sm.getAllItems().isEmpty()) {
-            this.sm.addItem(new Item("1", "Laptop", "High performance laptop", 1, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGoQDLRQCgfedvcfRBgWol-dXTJ4IpIGgppg&s"));
-            this.sm.addItem(new Item("2", "Smartphone", "Latest model smartphone", 800, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6t0zst_7dmMNi-eJBK58VuHLee0Q5PBQatg&s"));
-            this.sm.addItem(new Item("3", "Headphones", "Noise-cancelling headphones", 150, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2FKeSgIbsF64rqq-7OrmYxyq3k0a-TXnklg&s"));
-        }
+        //this.sm = StoreManagerImpl.getInstance();
+        //if (sm.findAllItems().isEmpty()) {
+        //    this.sm.addItem(new Item("1", "Laptop", "High performance laptop", 1, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGoQDLRQCgfedvcfRBgWol-dXTJ4IpIGgppg&s"));
+        //    this.sm.addItem(new Item("2", "Smartphone", "Latest model smartphone", 800, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6t0zst_7dmMNi-eJBK58VuHLee0Q5PBQatg&s"));
+        //    this.sm.addItem(new Item("3", "Headphones", "Noise-cancelling headphones", 150, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2FKeSgIbsF64rqq-7OrmYxyq3k0a-TXnklg&s"));
+        //}
     }
 
     public List<Item> getItemsLocal() {
-        return this.sm.getAllItems();
+        return this.sm.findAllItems();
     }
 
     @GET
@@ -40,12 +46,41 @@ public class StoreService {
     })
     @Produces(MediaType.APPLICATION_JSON)
     public Response getItems() {
-        List<Item> items = this.sm.getAllItems();
-        if (items.isEmpty()) {
-            return Response.status(Response.Status.NO_CONTENT).build();
+        Connection connection = null;
+        try  {
+            connection = DBUtils.getConnection();
+            String sql = "SELECT * FROM item";
+            try (PreparedStatement statement = connection.prepareStatement(sql);
+                 ResultSet resultSet = statement.executeQuery()) {
+                List<Item> items = new ArrayList<>();
+                while (resultSet.next()) {
+                    items.add(new Item(
+                            resultSet.getString("id"),
+                            resultSet.getString("name"),
+                            resultSet.getString("description"),
+                            resultSet.getInt("price"),
+                            resultSet.getString("imageUrl")
+                    ));
+                }
+                if (items.isEmpty()) {
+                    return Response.status(Response.Status.NO_CONTENT).build();
+                }
+                GenericEntity<List<Item>> entity = new GenericEntity<List<Item>>(items) {};
+                return Response.ok(entity).build();
+            }
+        } catch (SQLException e) {
+            logger.error("Error retrieving items: " + e.getMessage(), e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
-        GenericEntity<List<Item>> entity = new GenericEntity<List<Item>>(items) {};
-        return Response.ok(entity).build();
+        finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     @POST
@@ -56,18 +91,42 @@ public class StoreService {
     })
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addItem(Item item, @Context SecurityContext securityContext) {
-        if (!securityContext.isUserInRole("admin")) {
-            return Response.status(Response.Status.FORBIDDEN).entity("No tienes permiso para realizar esta acción").build();
-        }
+        Connection connection = null;
+        try {
+            connection = DBUtils.getConnection();
+            String checkSql = "SELECT COUNT(*) FROM item WHERE name = ?";
+            try (PreparedStatement checkStmt = connection.prepareStatement(checkSql)) {
+                checkStmt.setString(1, item.getName());
+                try (ResultSet resultSet = checkStmt.executeQuery()) {
+                    if (resultSet.next() && resultSet.getInt(1) > 0) {
+                        return Response.status(409).entity("Item already exists").build();
+                    }
+                }
+            }
 
-        for (Item existingItem : this.sm.getAllItems()) {
-            if (existingItem.getName().equals(item.getName())) {
-                return Response.status(409).entity("Item already exists").build();
+            String insertSql = "INSERT INTO item (id, name, description, price, imageUrl) VALUES (?, ?, ?, ?, ?)";
+            try (PreparedStatement insertStmt = connection.prepareStatement(insertSql)) {
+                insertStmt.setString(1, item.getId());
+                insertStmt.setString(2, item.getName());
+                insertStmt.setString(3, item.getDescription());
+                insertStmt.setInt(4, item.getPrice());
+                insertStmt.setString(5, item.getImageUrl());
+                insertStmt.executeUpdate();
+            }
+            return Response.status(201).entity("Item added successfully").build();
+        } catch (SQLException e) {
+            logger.error("Error adding item: " + e.getMessage(), e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+        finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         }
-
-        this.sm.addItem(item);
-        return Response.status(201).entity("Item added successfully").build();
     }
 
     @DELETE
@@ -78,23 +137,30 @@ public class StoreService {
     })
     @Path("/items/{name}")
     public Response deleteItem(@PathParam("name") String name, @Context SecurityContext securityContext) {
-        if (!securityContext.isUserInRole("admin")) {
-            return Response.status(Response.Status.FORBIDDEN).entity("No tienes permiso para realizar esta acción").build();
+        Connection connection = null;
+        try  {
+            connection = DBUtils.getConnection();
+            String deleteSql = "DELETE FROM item WHERE name = ?";
+            try (PreparedStatement deleteStmt = connection.prepareStatement(deleteSql)) {
+                deleteStmt.setString(1, name);
+                int rowsAffected = deleteStmt.executeUpdate();
+                if (rowsAffected == 0) {
+                    return Response.status(404).entity("Item not found").build();
+                }
+            }
+            return Response.status(201).entity("Item deleted successfully").build();
+        } catch (SQLException e) {
+            logger.error("Error deleting item: " + e.getMessage(), e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
-
-        Item itemToRemove = null;
-        for (Item item : this.sm.getAllItems()) {
-            if (item.getName().equals(name)) {
-                itemToRemove = item;
-                break;
+        finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         }
-
-        if (itemToRemove == null) {
-            return Response.status(404).entity("Item not found").build();
-        }
-
-        this.sm.deleteItem(name);
-        return Response.status(201).entity("Item deleted successfully").build();
     }
 }

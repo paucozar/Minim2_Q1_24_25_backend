@@ -1,11 +1,27 @@
 package edu.upc.dsa.models;
 
-public class Item implements Comparable<Item> {
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class Item {
+
+    @JsonProperty("id")
     private String id;
+
+    @JsonProperty("name")
     private String name;
+
+    @JsonProperty("description")
     private String description;
+
+    @JsonProperty("price")
     private int price;
+
+    @JsonProperty("imageUrl")
     private String imageUrl;
+
+
+    @JsonProperty("quantity")
+    private int quantity;
 
     public Item() {}
 
@@ -15,6 +31,14 @@ public class Item implements Comparable<Item> {
         this.description = description;
         this.price = price;
         this.imageUrl = imageUrl;
+        this.quantity = 0;
+    }
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
     }
 
     public String getId() {
@@ -57,8 +81,13 @@ public class Item implements Comparable<Item> {
         this.imageUrl = imageUrl;
     }
 
-    @Override
+
     public int compareTo(Item other) {
         return this.name.compareTo(other.name);
+    }
+
+    @Override
+    public String toString() {
+        return "Item [id=" + id + ", name=" + name + ", description=" + description + ", price=" + price + ", imageUrl=" + imageUrl + "]";
     }
 }

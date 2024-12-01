@@ -9,7 +9,8 @@ public interface StoreManager {
 
         public Item getItembyId(String id);
 
-        public List<Item> getAllItems();
+        public List<Item> findAll();
+        public List<Item> findAllItems();
 
         public void addItem(Item item);
 
