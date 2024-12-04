@@ -3,9 +3,9 @@ package edu.upc.dsa.models;
 import edu.upc.dsa.util.RandomUtils;
 
 public class User {
+    private String id;
     private String username;
     private String password;
-    private String id;
     private String isAdmin;
     private String fullName;
     private String email;
@@ -17,7 +17,7 @@ public class User {
     public User() {
         this.setId(RandomUtils.getId());
         this.isAdmin = "notadmin";
-        this.coins = 200;
+        this.coins = 0;
     }
 
     public User(String username, String password, String isAdmin) {

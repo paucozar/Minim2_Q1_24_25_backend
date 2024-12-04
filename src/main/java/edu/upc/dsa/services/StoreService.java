@@ -4,6 +4,7 @@ package edu.upc.dsa.services;
 import edu.upc.dsa.DBUtils;
 import edu.upc.dsa.StoreManagerImpl;
 import edu.upc.dsa.models.Item;
+import edu.upc.dsa.orm.dao.ItemDaoImpl;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -22,6 +23,7 @@ import java.util.List;
 @Api(value = "/store", description = "Endpoint to Store Service")
 @Path("/store")
 public class StoreService {
+    ItemDaoImpl itemDAO = new ItemDaoImpl();
     private static final Logger logger = Logger.getLogger(StoreService.class);
     private StoreManagerImpl sm;
 
@@ -46,41 +48,18 @@ public class StoreService {
     })
     @Produces(MediaType.APPLICATION_JSON)
     public Response getItems() {
-        Connection connection = null;
-        try  {
-            connection = DBUtils.getConnection();
-            String sql = "SELECT * FROM item";
-            try (PreparedStatement statement = connection.prepareStatement(sql);
-                 ResultSet resultSet = statement.executeQuery()) {
-                List<Item> items = new ArrayList<>();
-                while (resultSet.next()) {
-                    items.add(new Item(
-                            resultSet.getString("id"),
-                            resultSet.getString("name"),
-                            resultSet.getString("description"),
-                            resultSet.getInt("price"),
-                            resultSet.getString("imageUrl")
-                    ));
-                }
-                if (items.isEmpty()) {
-                    return Response.status(Response.Status.NO_CONTENT).build();
-                }
-                GenericEntity<List<Item>> entity = new GenericEntity<List<Item>>(items) {};
-                return Response.ok(entity).build();
-            }
-        } catch (SQLException e) {
+        List<Item> items = null;
+        try {
+            items = itemDAO.getItems();
+        } catch (Exception e) {
             logger.error("Error retrieving items: " + e.getMessage(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
-        finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
+        if (items == null || items.isEmpty()) {
+            return Response.status(Response.Status.NO_CONTENT).build();
         }
+        GenericEntity<List<Item>> entity = new GenericEntity<List<Item>>(items) {};
+        return Response.ok(entity).build();
     }
 
     @POST

@@ -3,6 +3,9 @@ package edu.upc.dsa.services;
 
 import edu.upc.dsa.*;
 import edu.upc.dsa.models.*;
+import edu.upc.dsa.orm.dao.ItemDaoImpl;
+import edu.upc.dsa.orm.dao.userItemDAO;
+import edu.upc.dsa.orm.dao.userItemDAOImpl;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -10,7 +13,8 @@ import io.swagger.annotations.ApiResponses;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.mindrot.jbcrypt.BCrypt;
-
+import edu.upc.dsa.orm.Session;
+import edu.upc.dsa.orm.dao.UserDAOImpl;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.io.File;
@@ -37,6 +41,9 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 @Path("/users")
 @Produces(MediaType.APPLICATION_JSON)
 public class UserService extends Application {
+    UserDAOImpl userDAO = new UserDAOImpl();
+    ItemDaoImpl ItemDAO = new ItemDaoImpl();
+    userItemDAOImpl UserItemDAO = new userItemDAOImpl();
 
     @Override
     public Set<Class<?>> getClasses() {
@@ -194,37 +201,16 @@ public class UserService extends Application {
     })
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUser() {
-        Connection connection = null;
         try {
-            connection = DBUtils.getConnection();
-            String sql = "SELECT * FROM user";
-            PreparedStatement statement = connection.prepareStatement(sql);
-            ResultSet resultSet = statement.executeQuery();
-
-            List<User> users = new ArrayList<>();
-            while (resultSet.next()) {
-                User user = new User();
-                user.setUsername(resultSet.getString("username"));
-                user.setFullName(resultSet.getString("fullName"));
-                user.setEmail(resultSet.getString("email"));
-                user.setAge(resultSet.getInt("age"));
-                user.setProfilePicture(resultSet.getString("profilePicture"));
-                users.add(user);
+            List<User> users = userDAO.getUsers();
+            if (users.isEmpty()) {
+                return Response.status(Response.Status.NOT_FOUND).entity("{\"message\": \"No users found\"}").build();
             }
-
             GenericEntity<List<User>> entity = new GenericEntity<List<User>>(users) {};
             return Response.ok(entity).build();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             logger.error("Error al obtener los usuarios: " + e.getMessage(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("{\"message\": \"Error interno del servidor\"}").build();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 
@@ -237,39 +223,13 @@ public class UserService extends Application {
     @Path("/{username}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUser(@PathParam("username") String username) {
-        Connection connection = null;
-        try {
-            connection = DBUtils.getConnection();
-            String sql = "SELECT * FROM user WHERE username = ?";
-            PreparedStatement statement = connection.prepareStatement(sql);
-            statement.setString(1, username);
-            ResultSet resultSet = statement.executeQuery();
-
-            if (!resultSet.next()) {
-                return Response.status(Response.Status.NOT_FOUND).entity("{\"message\": \"Usuario no encontrado\"}").build();
-            }
-
-            User user = new User();
-            user.setUsername(resultSet.getString("username"));
-            user.setFullName(resultSet.getString("fullName"));
-            user.setEmail(resultSet.getString("email"));
-            user.setAge(resultSet.getInt("age"));
-            user.setProfilePicture(resultSet.getString("profilePicture"));
-
-            return Response.status(Response.Status.OK).entity(user).build();
-        } catch (SQLException e) {
-            logger.error("Error al obtener el usuario: " + e.getMessage(), e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("{\"message\": \"Error interno del servidor\"}").build();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
+        User user = userDAO.getUserbyName(new User(username, null, null));
+        if (user == null) {
+            return Response.status(Response.Status.NOT_FOUND).entity("{\"message\": \"Usuario no encontrado\"}").build();
         }
+        return Response.status(Response.Status.OK).entity(user).build();
     }
+
 
     @GET
     @ApiOperation(value = "get a User Profile", notes = "asdasd")
@@ -280,38 +240,14 @@ public class UserService extends Application {
     @Path("/{username}/profile")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUserProfile(@PathParam("username") String username) {
-        Connection connection = null;
-        try {
-            connection = DBUtils.getConnection();
-            String sql = "SELECT * FROM user WHERE username = ?";
-            PreparedStatement statement = connection.prepareStatement(sql);
-            statement.setString(1, username);
-            ResultSet resultSet = statement.executeQuery();
-
-            if (!resultSet.next()) {
-                return Response.status(Response.Status.NOT_FOUND).entity("{\"message\": \"Usuario no encontrado\"}").build();
-            }
-
-            User user = new User();
-            user.setUsername(resultSet.getString("username"));
-            user.setFullName(resultSet.getString("fullName"));
-            user.setEmail(resultSet.getString("email"));
-            user.setAge(resultSet.getInt("age"));
-            user.setProfilePicture(resultSet.getString("profilePicture"));
-
-            return Response.status(Response.Status.OK).entity(user).build();
-        } catch (SQLException e) {
-            logger.error("Error al obtener el perfil de usuario: " + e.getMessage(), e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("{\"message\": \"Error interno del servidor\"}").build();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
+        User user = userDAO.getUserbyName(new User(username, null, null));
+        if (user == null) {
+            logger.warn("Usuario no encontrado: " + username);
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("{\"message\": \"Usuario no encontrado\"}")
+                    .build();
         }
+        return Response.status(Response.Status.OK).entity(user).build();
     }
 
     @DELETE
@@ -416,48 +352,35 @@ public class UserService extends Application {
             @ApiResponse(code = 404, message = "Usuario no encontrado")
     })
     public Response updateUserProfile(@PathParam("username") String username, User userProfileUpdate) {
-        Connection connection = null;
+        User user = userDAO.getUserbyName(new User(username, null, null));
+        if (user == null) {
+            logger.warn("Usuario no encontrado: " + username);
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("{\"message\": \"Usuario no encontrado\"}")
+                    .build();
+        }
+
+        user.setFullName(userProfileUpdate.getFullName() != null ? userProfileUpdate.getFullName() : user.getFullName());
+        user.setEmail(userProfileUpdate.getEmail() != null ? userProfileUpdate.getEmail() : user.getEmail());
+        user.setAge(userProfileUpdate.getAge() != 0 ? userProfileUpdate.getAge() : user.getAge());
+        user.setProfilePicture(userProfileUpdate.getProfilePicture() != null ? userProfileUpdate.getProfilePicture() : user.getProfilePicture());
+        user.setCoins(userProfileUpdate.getCoins() != 0 ? userProfileUpdate.getCoins() : user.getCoins());
+        user.setPassword(userProfileUpdate.getPassword() != null ? userProfileUpdate.getPassword() : user.getPassword());
+        user.setUsername(userProfileUpdate.getUsername() != null ? userProfileUpdate.getUsername() : user.getUsername());
+        user.setIsAdmin(userProfileUpdate.getIsAdmin() != null ? userProfileUpdate.getIsAdmin() : user.getIsAdmin());
+        user.setId(userProfileUpdate.getId() != null ? userProfileUpdate.getId() : user.getId());
+
         try {
-            connection = DBUtils.getConnection();
-            String sql = "SELECT * FROM user WHERE username = ?";
-            PreparedStatement statement = connection.prepareStatement(sql);
-            statement.setString(1, username);
-            ResultSet resultSet = statement.executeQuery();
-
-            if (!resultSet.next()) {
-                logger.warn("Usuario no encontrado: " + username);
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity("{\"message\": \"Usuario no encontrado\"}")
-                        .build();
-            }
-
-            // Actualizar los parámetros del perfil con los valores del JSON
-            String updateSql = "UPDATE user SET fullName = ?, email = ?, age = ?, profilePicture = ? WHERE username = ?";
-            PreparedStatement updateStatement = connection.prepareStatement(updateSql);
-            updateStatement.setString(1, userProfileUpdate.getFullName() != null ? userProfileUpdate.getFullName() : resultSet.getString("fullName"));
-            updateStatement.setString(2, userProfileUpdate.getEmail() != null ? userProfileUpdate.getEmail() : resultSet.getString("email"));
-            updateStatement.setInt(3, userProfileUpdate.getAge() != 0 ? userProfileUpdate.getAge() : resultSet.getInt("age"));
-            updateStatement.setString(4, userProfileUpdate.getProfilePicture() != null ? userProfileUpdate.getProfilePicture() : resultSet.getString("profilePicture"));
-            updateStatement.setString(5, username);
-            updateStatement.executeUpdate();
-
+            userDAO.updateUser(user);
             logger.info("Perfil actualizado para el usuario: " + username);
             return Response.status(Response.Status.OK)
                     .entity("{\"message\": \"Perfil actualizado exitosamente\"}")
                     .build();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             logger.error("Error al actualizar el perfil de usuario: " + e.getMessage(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("{\"message\": \"Error interno del servidor\"}")
                     .build();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 
@@ -474,39 +397,20 @@ public class UserService extends Application {
             return Response.status(500).entity("{\"message\": \"Username or password cannot be null\"}").build();
         }
 
-        Connection connection = null;
         try {
-            connection = DBUtils.getConnection();
-            String checkUserSql = "SELECT * FROM user WHERE username = ?";
-            PreparedStatement checkUserStmt = connection.prepareStatement(checkUserSql);
-            checkUserStmt.setString(1, user.getUsername());
-            ResultSet resultSet = checkUserStmt.executeQuery();
 
-            if (resultSet.next()) {
+            if (userDAO.getUserbyName(user) != null) {
                 return Response.status(409).entity("{\"message\": \"Username already exists\"}").build();
             }
-
-            String insertUserSql = "INSERT INTO user (id, username, password, isAdmin) VALUES (?, ?, ?, ?)";
-            PreparedStatement insertUserStmt = connection.prepareStatement(insertUserSql);
-            insertUserStmt.setString(1, user.getId());
-            insertUserStmt.setString(2, user.getUsername());
-            insertUserStmt.setString(3, user.getPassword());
-            insertUserStmt.setString(4, user.getIsAdmin());
-            insertUserStmt.executeUpdate();
+            String result = userDAO.addUser(user.getId(), user.getUsername(), user.getPassword());
+            if(result.equals("Error")) return Response.status(500).entity("{\"message\": \"Validation Error\"}").build();
 
             return Response.status(201).entity("{\"message\": \"User created successfully\"}").build();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             logger.error("Error creating user: " + e.getMessage(), e);
             return Response.status(500).entity("{\"message\": \"Internal server error\"}").build();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
+
     }
 
 
@@ -520,89 +424,53 @@ public class UserService extends Application {
     @Path("/login")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response login(User user) {
+        User dbUser = userDAO.getUserbyName(user);
 
-        Connection connection = null;
-            try {
-                connection = DBUtils.getConnection();
-                String sql = "SELECT * FROM user WHERE username = ?";
-                PreparedStatement statement = connection.prepareStatement(sql);
-                statement.setString(1, user.getUsername());
-                ResultSet resultSet = statement.executeQuery();
-                if (resultSet.next()) {
-                    String password = resultSet.getString("password");
-                    if (password == null || !user.getPassword().equals(password)) {
-                        logger.warn("Credenciales incorrectas para el usuario: " + user.getUsername());
-                        return Response.status(Response.Status.UNAUTHORIZED).entity("{\"message\": \"Credenciales incorrectas\"}").build();
-                    }
-                }
+        if (dbUser == null || !user.getPassword().equals(dbUser.getPassword())) {
+            logger.warn("Credenciales incorrectas para el usuario: " + user.getUsername());
+            return Response.status(Response.Status.UNAUTHORIZED).entity("{\"message\": \"Credenciales incorrectas\"}").build();
+        }
 
-                String role = resultSet.getString("isAdmin").equals("admin") ? "admin" : "user";
-                int coins = resultSet.getInt("coins");
+        String role = dbUser.getIsAdmin().equals("admin") ? "admin" : "user";
+        int coins = dbUser.getCoins();
 
-                return Response.ok()
-                        .entity("{\"message\": \"Login exitoso\", \"role\": \"" + role + "\", \"coins\": " + coins + ", \"redirect\": \"" + (role.equals("admin") ? "admin.html" : "user.html") + "\"}")
-                        .build();
-            } catch (SQLException e) {
-                logger.error("Error al iniciar sesión: " + e.getMessage());
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("{\"message\": \"Error interno del servidor\"}").build();
-            }
-            finally {
-                if (connection != null) {
-                    try {
-                        connection.close();
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-
-
+        return Response.ok()
+                .entity("{\"message\": \"Login exitoso\", \"role\": \"" + role + "\", \"coins\": " + coins + ", \"redirect\": \"" + (role.equals("admin") ? "admin.html" : "user.html") + "\"}")
+                .build();
     }
+
+
 
     @Path("/purchase")
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response purchase(PurchaseRequest request) {
-        Connection connection = null;
         try {
-            connection = DBUtils.getConnection();
-
             // Obtener los valores de username, password, y itemId desde el requestBody
             User user = request.getUser();
             Item item = request.getItem();
             int quantity = request.getQuantity();
 
             // Buscar el usuario por su nombre de usuario
-            String userSql = "SELECT * FROM user WHERE username = ?";
-            PreparedStatement userStmt = connection.prepareStatement(userSql);
-            userStmt.setString(1, user.getUsername());
-            ResultSet userResultSet = userStmt.executeQuery();
-            if (userResultSet.next()) {
-                String password = userResultSet.getString("password");
-                if (password == null || !user.getPassword().equals(password)) {
-                    return Response.status(Response.Status.UNAUTHORIZED)
-                            .entity("{\"message\": \"Credenciales incorrectas\"}")
-                            .build();
-                }
+            User dbUser = userDAO.getUserbyName(user);
+            if (dbUser == null || !user.getPassword().equals(dbUser.getPassword())) {
+                return Response.status(Response.Status.UNAUTHORIZED)
+                        .entity("{\"message\": \"Credenciales incorrectas\"}")
+                        .build();
             }
 
             // Buscar el item por su id
-            String itemSql = "SELECT * FROM item WHERE id = ?";
-            PreparedStatement itemStmt = connection.prepareStatement(itemSql);
-            itemStmt.setString(1, item.getId());
-            ResultSet itemResultSet = itemStmt.executeQuery();
-
-            if (!itemResultSet.next()) {
+            Item dbItem = ItemDAO.getItembyID(item.getId());
+            if (dbItem == null) {
                 return Response.status(Response.Status.NOT_FOUND)
                         .entity("{\"message\": \"Item no encontrado\"}")
                         .build();
             }
 
             // Verificar si el usuario tiene suficientes monedas para realizar la compra
-            int userCoins = userResultSet.getInt("coins");
-            int itemPrice = itemResultSet.getInt("price");
+            int userCoins = dbUser.getCoins();
+            int itemPrice = dbItem.getPrice();
             if (userCoins < itemPrice) {
                 return Response.status(Response.Status.BAD_REQUEST)
                         .entity("{\"message\": \"No tienes suficientes monedas para esta compra\"}")
@@ -610,38 +478,20 @@ public class UserService extends Application {
             }
 
             // Realizar la compra (restar monedas)
-            String updateUserSql = "UPDATE user SET coins = ? WHERE username = ?";
-            PreparedStatement updateUserStmt = connection.prepareStatement(updateUserSql);
-            updateUserStmt.setInt(1, userCoins - itemPrice);
-            updateUserStmt.setString(2, user.getUsername());
-            updateUserStmt.executeUpdate();
+            dbUser.setCoins(userCoins - itemPrice);
+            userDAO.updateUser(dbUser);
 
             // Insertar la compra en la tabla user_item
-            String insertUserItemSql = "INSERT INTO user_item (id, user_id, item_id, quantity) VALUES (?, ?, ?, ?)";
-            PreparedStatement insertUserItemStmt = connection.prepareStatement(insertUserItemSql);
-            insertUserItemStmt.setString(1, UUID.randomUUID().toString());
-            insertUserItemStmt.setString(2, userResultSet.getString("id"));
-            insertUserItemStmt.setString(3, item.getId());
-            insertUserItemStmt.setInt(4, quantity);
-            insertUserItemStmt.executeUpdate();
-
+            UserItemDAO.insertUserItem(dbUser.getId(), dbItem.getId(), quantity);
 
             // Responder con las monedas restantes y el mensaje de éxito
             return Response.ok()
                     .entity("{\"message\": \"Compra exitosa\", \"coins\": " + (userCoins - itemPrice) + "}")
                     .build();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("{\"message\": \"Error interno del servidor\"}")
                     .build();
-        } finally {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 }
