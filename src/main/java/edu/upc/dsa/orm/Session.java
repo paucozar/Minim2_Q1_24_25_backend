@@ -13,5 +13,4 @@ public interface Session<E> {
     List<Object> findAll(Class theClass);                               // cR
     List<Object> findAll(Class theClass, HashMap params);
     List<Object> query(String query, Class theClass, HashMap params);
-    int InsertUserItems(String userID, String itemID, int quantity);
 }

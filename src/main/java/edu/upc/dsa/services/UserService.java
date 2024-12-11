@@ -4,22 +4,14 @@ package edu.upc.dsa.services;
 import edu.upc.dsa.*;
 import edu.upc.dsa.models.*;
 import edu.upc.dsa.orm.dao.ItemDaoImpl;
-import edu.upc.dsa.orm.dao.userItemDAO;
-import edu.upc.dsa.orm.dao.userItemDAOImpl;
+import edu.upc.dsa.orm.dao.UserItemDAOImpl;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.mindrot.jbcrypt.BCrypt;
-import edu.upc.dsa.orm.Session;
 import edu.upc.dsa.orm.dao.UserDAOImpl;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -43,7 +35,7 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 public class UserService extends Application {
     UserDAOImpl userDAO = new UserDAOImpl();
     ItemDaoImpl ItemDAO = new ItemDaoImpl();
-    userItemDAOImpl UserItemDAO = new userItemDAOImpl();
+    UserItemDAOImpl UserItemDAO = new UserItemDAOImpl();
 
     @Override
     public Set<Class<?>> getClasses() {
@@ -478,15 +470,16 @@ public class UserService extends Application {
             }
 
             // Realizar la compra (restar monedas)
-            dbUser.setCoins(userCoins - itemPrice);
+            dbUser.setCoins(userCoins - itemPrice * quantity);
             userDAO.updateUser(dbUser);
+            User_Item userItem = new User_Item(dbUser.getId(), dbItem.getId(), quantity);
 
             // Insertar la compra en la tabla user_item
-            UserItemDAO.insertUserItem(dbUser.getId(), dbItem.getId(), quantity);
+            UserItemDAO.insertUserItem(userItem);
 
             // Responder con las monedas restantes y el mensaje de éxito
             return Response.ok()
-                    .entity("{\"message\": \"Compra exitosa\", \"coins\": " + (userCoins - itemPrice) + "}")
+                    .entity("{\"message\": \"Compra exitosa\", \"coins\": " + (userCoins - itemPrice * quantity) + "}")
                     .build();
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)

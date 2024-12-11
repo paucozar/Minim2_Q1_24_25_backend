@@ -1,9 +1,11 @@
 package edu.upc.dsa.models;
 
+import edu.upc.dsa.annotations.CustomAnnotation;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Item {
 
+    @CustomAnnotation("NO")
     @JsonProperty("id")
     private String id;
 
@@ -19,7 +21,7 @@ public class Item {
     @JsonProperty("imageUrl")
     private String imageUrl;
 
-
+    @CustomAnnotation("NO")
     @JsonProperty("quantity")
     private int quantity;
 

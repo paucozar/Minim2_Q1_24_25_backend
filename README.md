@@ -53,3 +53,12 @@ CREATE TABLE `user_item` (
 COLLATE='utf8mb4_uca1400_ai_ci'
 ENGINE=InnoDB
 ;
+
+ITEMS TIENDA:------------------------------------------------------------------------------------
+INSERT INTO item (id, name, description, price, imageUrl)
+VALUES
+('1', 'Bola de Fuego', 'Lanza una esfera de fuego que inflige daño al impactar.', 150, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ-wHYrK265vjCUBmuUSHyaERdmcHN9iojqkQ&s'),
+('2', 'Bola de Hielo', 'Lanza una esfera de hielo que congela al enemigo.', 180, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQAgdBIVEm51EGp5zMzDRQspWCl4X8oIf9lYg&s'),
+('3', 'Poción de Vida', 'Restaura la salud completamente.', 200, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRrMDQrc12ZAoYjM8jlHi5YXTncLy4jKDIFaA&s'),
+('4', 'Poción de Salto', 'Aumenta la altura del salto durante 30 segundos.', 250, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS_6Y0W1fwWxex-ckB1mla30jQJqMgoGwlqxA&s'),
+('5', 'Poción de Velocidad', 'Incrementa la velocidad de movimiento durante 30 segundos.', 250, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQdY97tVLVVy_usvPWswhfIhZ5GWvq7I9LzQw&s');

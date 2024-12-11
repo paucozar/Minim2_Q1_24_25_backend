@@ -1,11 +1,13 @@
 package edu.upc.dsa.orm;
 
+import edu.upc.dsa.annotations.CustomAnnotation;
 import edu.upc.dsa.models.User;
 import edu.upc.dsa.orm.Session;
 import edu.upc.dsa.orm.util.ObjectHelper;
 import edu.upc.dsa.orm.util.QueryHelper;
 import edu.upc.dsa.util.RandomUtils;
 
+import java.lang.reflect.Field;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -95,7 +97,6 @@ public class SessionImpl implements Session {
             e.printStackTrace();
         }
     }
-
     public void delete(Object object) {
 
     }
@@ -128,20 +129,6 @@ public class SessionImpl implements Session {
         return null;
     }
 
-    @Override
-    public int InsertUserItems(String userID, String itemID, int quantity) {
-        RandomUtils random = new RandomUtils();
-        String sql = "INSERT INTO user_item (id, user_id, item_id, quantity) VALUES (?, ?, ?, ?)";
-        String id = random.getId();
-        try (PreparedStatement pstm = conn.prepareStatement(sql)) {
-            pstm.setString(1, id);
-            pstm.setString(2, userID);
-            pstm.setString(3, itemID);
-            pstm.setInt(4, quantity);
-            return pstm.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return -1;
-        }
-    }
+
+
 }

@@ -312,10 +312,10 @@
     if (response.ok) {
       const data = await response.json();
       const updatedCoins = data.coins;
+        localStorage.setItem("coins", updatedCoins);
 
       document.getElementById("coinsDisplay").textContent = `Coins: ${updatedCoins}`;
       alert(`Compra exitosa. Monedas restantes: ${updatedCoins}`);
-
       // Call addItemToUserInventory API
 
   }
