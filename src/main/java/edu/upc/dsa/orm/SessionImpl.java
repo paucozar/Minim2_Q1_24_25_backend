@@ -67,11 +67,16 @@ public class SessionImpl implements Session {
                 if (rs.next()) {
                     entity = theClass.getDeclaredConstructor().newInstance();
                     for (String field : ObjectHelper.getFields(entity)) {
-                        if (!field.equals("quantity")) {
-                            ObjectHelper.setter(entity, field, rs.getObject(field));
+                        try {
+                            Field declaredField = entity.getClass().getDeclaredField(field);
+                            CustomAnnotation annotation = declaredField.getAnnotation(CustomAnnotation.class);
+                            if (annotation == null || !annotation.value().equals("quantity_exclude")) {
+                                ObjectHelper.setter(entity, field, rs.getObject(field));
+                            }
+                        } catch (NoSuchFieldException e) {
+                            e.printStackTrace();
                         }
                     }
-
                 }
             }
         } catch (Exception e) {
@@ -82,16 +87,22 @@ public class SessionImpl implements Session {
 
 
 
-    public void update(Object object) {
-        String updateQuery = QueryHelper.createQueryUPDATE(object);
+    public void update(Object entity) {
+        String updateQuery = QueryHelper.createQueryUPDATE(entity);
         try (PreparedStatement pstm = conn.prepareStatement(updateQuery)) {
             int i = 1;
-            for (String field : ObjectHelper.getFields(object)) {
-                if (!field.equals("id")) {
-                    pstm.setObject(i++, ObjectHelper.getter(object, field));
+            for (String field : ObjectHelper.getFields(entity)) {
+                try {
+                    Field declaredField = entity.getClass().getDeclaredField(field);
+                    CustomAnnotation annotation = declaredField.getAnnotation(CustomAnnotation.class);
+                    if ((annotation == null || !annotation.value().equals("id_exclude"))) {
+                        pstm.setObject(i++, ObjectHelper.getter(entity, field));
+                    }
+                } catch (NoSuchFieldException e) {
+                    e.printStackTrace();
                 }
             }
-            pstm.setObject(i, ObjectHelper.getter(object, "username"));
+            pstm.setObject(i, ObjectHelper.getter(entity, "id"));
             pstm.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -109,8 +120,14 @@ public class SessionImpl implements Session {
             while (rs.next()) {
                 Object entity = theClass.getDeclaredConstructor().newInstance();
                 for (String field : ObjectHelper.getFields(entity)) {
-                    if (!field.equals("quantity")) {
-                        ObjectHelper.setter(entity, field, rs.getObject(field));
+                    try {
+                        Field declaredField = entity.getClass().getDeclaredField(field);
+                        CustomAnnotation annotation = declaredField.getAnnotation(CustomAnnotation.class);
+                        if (annotation == null || !annotation.value().equals("quantity_exclude")) {
+                            ObjectHelper.setter(entity, field, rs.getObject(field));
+                        }
+                    } catch (NoSuchFieldException e) {
+                        e.printStackTrace();
                     }
                 }
                 entities.add(entity);

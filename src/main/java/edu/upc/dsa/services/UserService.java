@@ -360,7 +360,7 @@ public class UserService extends Application {
         user.setPassword(userProfileUpdate.getPassword() != null ? userProfileUpdate.getPassword() : user.getPassword());
         user.setUsername(userProfileUpdate.getUsername() != null ? userProfileUpdate.getUsername() : user.getUsername());
         user.setIsAdmin(userProfileUpdate.getIsAdmin() != null ? userProfileUpdate.getIsAdmin() : user.getIsAdmin());
-        user.setId(userProfileUpdate.getId() != null ? userProfileUpdate.getId() : user.getId());
+
 
         try {
             userDAO.updateUser(user);

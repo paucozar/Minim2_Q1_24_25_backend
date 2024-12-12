@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Item {
 
-    @CustomAnnotation("NO")
+    @CustomAnnotation("id_exclude")
     @JsonProperty("id")
     private String id;
 
@@ -21,7 +21,7 @@ public class Item {
     @JsonProperty("imageUrl")
     private String imageUrl;
 
-    @CustomAnnotation("NO")
+    @CustomAnnotation("quantity_exclude")
     @JsonProperty("quantity")
     private int quantity;
 

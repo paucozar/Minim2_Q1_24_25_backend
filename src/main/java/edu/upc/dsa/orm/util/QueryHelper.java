@@ -1,5 +1,9 @@
 package edu.upc.dsa.orm.util;
 
+import edu.upc.dsa.annotations.CustomAnnotation;
+
+import javax.validation.constraints.NotNull;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -56,19 +60,30 @@ public class QueryHelper {
     }
 
     public static String createQueryUPDATE(Object entity) {
+        StringBuilder sb = new StringBuilder("UPDATE ");
+        sb.append(entity.getClass().getSimpleName()).append(" SET ");
 
-        StringBuffer sb = new StringBuffer("UPDATE ");
-        sb.append(entity.getClass().getSimpleName()).append(" ");
-        sb.append("SET ");
+        String[] fields = ObjectHelper.getFields(entity);
+        for (String field : fields) {
+            try {
+                Field declaredField = entity.getClass().getDeclaredField(field);
 
-        String [] fields = edu.upc.dsa.orm.util.ObjectHelper.getFields(entity);
-
-        for (String field: fields) {
-            if (!field.equals("id")) sb.append(field).append("=?, ");
+                CustomAnnotation annotation = declaredField.getAnnotation(CustomAnnotation.class);
+                if (annotation != null) {
+                    String annotationValue = annotation.value();
+                    if (annotationValue == null || !annotationValue.equals("id_exclude")) {
+                        sb.append(field).append("=?, ");
+                    }
+                }
+                else {
+                    sb.append(field).append("=?, ");
+                }
+            } catch (NoSuchFieldException e) {
+                e.printStackTrace();
+            }
         }
-        sb.delete(sb.length()-2, sb.length());
-        sb.append(" WHERE USERNAME=?");
-
+        sb.delete(sb.length() - 2, sb.length());
+        sb.append(" WHERE ID = ?");
         return sb.toString();
     }
 }

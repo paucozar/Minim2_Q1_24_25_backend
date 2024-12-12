@@ -1,9 +1,12 @@
 package edu.upc.dsa.models;
 
+import edu.upc.dsa.annotations.CustomAnnotation;
 import edu.upc.dsa.util.RandomUtils;
 
 public class User {
+    @CustomAnnotation("id_exclude")
     private String id;
+
     private String username;
     private String password;
     private String isAdmin;

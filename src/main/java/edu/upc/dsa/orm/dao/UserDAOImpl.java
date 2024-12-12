@@ -88,6 +88,7 @@ public class UserDAOImpl implements UserDAO {
             session = FactorySession.openSession();
             User user = (User) session.get(User.class, usser.getUsername());
             if (user != null) {
+                user.setId(usser.getId());
                 user.setFullName(usser.getFullName());
                 user.setAge(usser.getAge());
                 user.setEmail(usser.getEmail());
