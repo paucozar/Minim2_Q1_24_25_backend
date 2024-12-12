@@ -253,35 +253,25 @@ public class UserService extends Application {
     })
     @Path("/{username}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response deleteUser(@PathParam("username") String username, @Context SecurityContext securityContext) {
+    public Response deleteUser(@PathParam("username") String id, @Context SecurityContext securityContext) {
         try {
-            // Verificar si el usuario está autenticado
-            if (securityContext.getUserPrincipal() == null) {
-                logger.info("Usuario no autenticado intentó eliminar un usuario.");
-                return Response.status(Response.Status.UNAUTHORIZED)
-                        .entity("{\"message\": \"Usuario no autenticado\"}")
-                        .build();
-            }
-
-            // Verificar si el usuario tiene permisos de administrador
-            if (!securityContext.isUserInRole("admin")) {
-                logger.info("Usuario sin permisos de admin: " + securityContext.getUserPrincipal().getName());
-                return Response.status(Response.Status.FORBIDDEN)
-                        .entity("{\"message\": \"No tienes permiso para realizar esta acción\"}")
-                        .build();
-            }
-
+            User user;
             // Procede con la eliminación del usuario
-            User u = this.us.getUserByUsername(username);
-            if (u == null) {
-                logger.warn("Usuario no encontrado: " + username);
+
+                user = userDAO.getUserbyID(id);
+            if ( user == null) {
+
+                user = userDAO.getUserbyName(new User(id, null, null));
+            }
+            else if (user == null) {
+                logger.warn("Usuario no encontrado: " + id);
                 return Response.status(Response.Status.NOT_FOUND)
                         .entity("{\"message\": \"Usuario no encontrado\"}")
                         .build();
             }
 
-            this.us.deleteUser(username);
-            logger.info("Usuario eliminado: " + username);
+            userDAO.deleteUserbyID(user.getId());
+            logger.info("Usuario eliminado: " + id);
             return Response.status(Response.Status.OK)
                     .entity("{\"message\": \"Usuario eliminado exitosamente\"}")
                     .build();
@@ -394,6 +384,9 @@ public class UserService extends Application {
             if (userDAO.getUserbyName(user) != null) {
                 return Response.status(409).entity("{\"message\": \"Username already exists\"}").build();
             }
+//            if (!user.isValidPassword(user.getPassword())) {
+//                return Response.status(410).entity("{\"message\": \"Password not strong enough\"}").build();
+//            }
             String result = userDAO.addUser(user.getId(), user.getUsername(), user.getPassword());
             if(result.equals("Error")) return Response.status(500).entity("{\"message\": \"Validation Error\"}").build();
 
@@ -416,6 +409,7 @@ public class UserService extends Application {
     @Path("/login")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response login(User user) {
+
         User dbUser = userDAO.getUserbyName(user);
 
         if (dbUser == null || !user.getPassword().equals(dbUser.getPassword())) {

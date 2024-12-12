@@ -158,9 +158,16 @@
             body: JSON.stringify({ username, password })
         })
         .then(response => {
-            if (!response.ok) {
-                return Promise.reject('Nombre de usuario ya en uso');
-            }
+        if (!response.ok) {
+            switch (response.status) {
+                case 410:
+                    return Promise.reject('Contraseña poco segura');
+                case 409:
+                    return Promise.reject('Nombre de usuario ya en uso');
+                default:
+                    return Promise.reject('Error desconocido');
+    }
+}
             return response.text();
         })
         .then(data => {

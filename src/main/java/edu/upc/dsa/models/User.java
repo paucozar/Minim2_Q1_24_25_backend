@@ -112,6 +112,11 @@ public class User {
         this.coins = coins;
     }
 
+    public boolean isValidPassword(String password) {
+        String regex = "^(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$";
+        return password.matches(regex);
+    }
+
 
 
     @Override

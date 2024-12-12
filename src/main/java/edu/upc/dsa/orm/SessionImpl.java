@@ -109,7 +109,13 @@ public class SessionImpl implements Session {
         }
     }
     public void delete(Object object) {
-
+        String deleteQuery = QueryHelper.createQueryDELETE(object);
+        try (PreparedStatement pstm = conn.prepareStatement(deleteQuery)) {
+            pstm.setObject(1, ObjectHelper.getter(object, "id"));
+            pstm.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public List<Object> findAll(Class theClass) {

@@ -11,7 +11,7 @@ public interface UserDAO {
     public User getUserbyName(User user);
 
     public void updateUser(User user);
-    public void deleteUserbyID(int ID);
+    public void deleteUserbyID(String ID);
     public List<User> getUsers();
     public int updateUserCoins(String name, int coins);
     //public List <User> getEmployeeByDept(int deptId);

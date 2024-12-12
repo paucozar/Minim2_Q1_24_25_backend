@@ -61,7 +61,19 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public User getUserbyID(String ID) {
-        return null;
+        Session session = null;
+        User user = null;
+        try {
+            session = FactorySession.openSession();
+            user = (User) session.get(User.class, ID);
+        } catch (Exception e) {
+            // LOG
+        } finally {
+            if (session != null) {
+                session.close();
+            }
+        }
+        return user;
     }
 
     @Override
@@ -111,8 +123,21 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
-    public void deleteUserbyID(int ID) {
-
+    public void deleteUserbyID(String ID) {
+        Session session = null;
+        try {
+            session = FactorySession.openSession();
+            User user = (User) session.get(User.class, ID);
+            if (user != null) {
+                session.delete(user);
+            }
+        } catch (Exception e) {
+            // LOG
+        } finally {
+            if (session != null) {
+                session.close();
+            }
+        }
     }
 
     @Override

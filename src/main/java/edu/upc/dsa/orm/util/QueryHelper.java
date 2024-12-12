@@ -36,12 +36,13 @@ public class QueryHelper {
         StringBuffer sb = new StringBuffer();
         sb.append("SELECT * FROM ");
         sb.append(entityClass.getSimpleName()).append(" ");
-        if (entityClass.getSimpleName().equals("User")) {
-            sb.append("WHERE USERNAME = ?");
-        }
-        else {
-            sb.append("WHERE ID = ?");
-        }
+        sb.append("WHERE ID = ?");
+//        if (entityClass.getSimpleName().equals("User")) {
+//            sb.append("WHERE USERNAME = ?");
+//        }
+//        else {
+//            sb.append("WHERE ID = ?");
+//        }
 
 
         return sb.toString();
@@ -84,6 +85,15 @@ public class QueryHelper {
         }
         sb.delete(sb.length() - 2, sb.length());
         sb.append(" WHERE ID = ?");
+        return sb.toString();
+    }
+
+    public static String createQueryDELETE(Object entity) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("DELETE FROM ");
+        sb.append(entity.getClass().getSimpleName());
+        sb.append(" WHERE ID = ?");
+
         return sb.toString();
     }
 }
