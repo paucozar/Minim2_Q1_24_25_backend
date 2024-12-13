@@ -84,6 +84,33 @@ public class SessionImpl implements Session {
         }
         return entity;
     }
+    @Override
+    public Object getbyName(Class theClass, Object ID) {
+        String sql = QueryHelper.createQuerySELECTWERENAME(theClass);
+        Object entity = null;
+        try (PreparedStatement pstm = conn.prepareStatement(sql)) {
+            pstm.setObject(1, ID);
+            try (ResultSet rs = pstm.executeQuery()) {
+                if (rs.next()) {
+                    entity = theClass.getDeclaredConstructor().newInstance();
+                    for (String field : ObjectHelper.getFields(entity)) {
+                        try {
+                            Field declaredField = entity.getClass().getDeclaredField(field);
+                            CustomAnnotation annotation = declaredField.getAnnotation(CustomAnnotation.class);
+                            if (annotation == null || !annotation.value().equals("quantity_exclude")) {
+                                ObjectHelper.setter(entity, field, rs.getObject(field));
+                            }
+                        } catch (NoSuchFieldException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return entity;
+    }
 
 
 

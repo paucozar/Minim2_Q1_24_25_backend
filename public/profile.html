@@ -4,11 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="pageTitle">Perfil de Usuario</title>
+    <!-- Enlace al archivo CSS -->
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
+<!-- Contenedor principal -->
 <div class="container">
+    <!-- Menú de navegación lateral -->
     <div class="sidebar">
         <div class="menu">
             <h2>Menú</h2>
@@ -22,6 +25,7 @@
         </div>
     </div>
 
+    <!-- Contenido principal -->
     <div class="main-content">
         <h1 id="profileHeading">Perfil de Usuario</h1>
         <img id="profilePicture" src="" alt="Foto de Perfil" style="width: 200px; height: auto; display: none; margin-bottom: 20px;">
@@ -67,6 +71,58 @@
 
 <script>
     $(document).ready(function() {
+        const username = localStorage.getItem('username'); // Aquí deberías usar el nombre de usuario autenticado
+        $.get(`/dsaApp/users/${username}`, function(user) {
+            $('#fullName').val(user.fullName);
+            $('#email').val(user.email);
+            $('#age').val(user.age);
+            const profilePictureUrl = user.profilePicture; // Obtener la URL de la foto de perfil del servidor
+            if (profilePictureUrl) {
+                $('#profilePictureUrl').val(profilePictureUrl);
+                $('#profilePicture').attr('src', profilePictureUrl).show();
+            }
+            $('#pageTitle').text(`Perfil de ${username}`);
+            $('#profileHeading').text(`Bienvenido, ${username}`);
+        });
+
+        $('#profileForm').submit(function(event) {
+            event.preventDefault();
+
+            var fullName = $('#fullName').val();
+            var email = $('#email').val();
+            var age = $('#age').val();
+            var profilePictureUrl = $('#profilePictureUrl').val();
+            var username = localStorage.getItem('username');
+
+            var profileData = {
+                fullName: fullName,
+                email: email,
+                age: parseInt(age),
+                profilePicture: profilePictureUrl // Incluir la URL de la foto de perfil en los datos del perfil
+            };
+
+            fetch(`http://localhost:8080/dsaApp/users/${username}/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(profileData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Perfil actualizado con éxito');
+                    $('#profilePicture').attr('src', profilePictureUrl).show();
+                } else {
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.message || 'Hubo un error al actualizar el perfil');
+                    });
+                }
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+        });
+
         // Mostrar el modal de eliminación de cuenta
         $('#deleteAccountButton').click(function() {
             $('#deleteAccountModal').show();

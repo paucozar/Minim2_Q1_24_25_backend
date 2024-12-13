@@ -18,14 +18,23 @@ public class QueryHelper {
 
         String [] fields = edu.upc.dsa.orm.util.ObjectHelper.getFields(entity);
 
-        sb.append("ID");
-        for (String field: fields) {
-            if (!field.equals("id")) sb.append(", ").append(field);
-        }
-        sb.append(") VALUES (?");
 
-        for (String field: fields) {
-            if (!field.equals("id"))  sb.append(", ?");
+        for (int i = 0; i < fields.length; i++) {
+            sb.append(fields[i]);
+            if (i < fields.length - 1) {
+                sb.append(", ");
+            }
+        }
+
+
+        sb.append(") VALUES (");
+        for (int i = 0; i < fields.length; i++) {
+
+                sb.append("?");
+                if (i < fields.length - 1) {
+                    sb.append(", ");
+                }
+
         }
         sb.append(")");
         // INSERT INTO User (ID, lastName, firstName, address, city) VALUES (0, ?, ?, ?,?)
@@ -43,6 +52,19 @@ public class QueryHelper {
 //        else {
 //            sb.append("WHERE ID = ?");
 //        }
+
+
+        return sb.toString();
+    }
+
+
+    public static String createQuerySELECTWERENAME(Class<?> entityClass) {
+        StringBuffer sb = new StringBuffer();
+        sb.append("SELECT * FROM ");
+        sb.append(entityClass.getSimpleName()).append(" ");
+
+        sb.append("WHERE USERNAME = ?");
+
 
 
         return sb.toString();

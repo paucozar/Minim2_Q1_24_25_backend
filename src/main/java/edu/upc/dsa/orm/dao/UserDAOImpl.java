@@ -82,7 +82,7 @@ public class UserDAOImpl implements UserDAO {
         User user = null;
         try {
             session = FactorySession.openSession();
-            user = (User) session.get(User.class, userprovided.getUsername());
+            user = (User) session.getbyName(User.class, userprovided.getUsername());
         } catch (Exception e) {
             // LOG
         } finally {
@@ -98,7 +98,7 @@ public class UserDAOImpl implements UserDAO {
         Session session = null;
         try {
             session = FactorySession.openSession();
-            User user = (User) session.get(User.class, usser.getUsername());
+            User user = (User) session.get(User.class, usser.getId());
             if (user != null) {
                 user.setId(usser.getId());
                 user.setFullName(usser.getFullName());

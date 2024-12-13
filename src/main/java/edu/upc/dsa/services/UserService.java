@@ -412,6 +412,10 @@ public class UserService extends Application {
 
         User dbUser = userDAO.getUserbyName(user);
 
+        if (dbUser == null ) {
+
+        }
+
         if (dbUser == null || !user.getPassword().equals(dbUser.getPassword())) {
             logger.warn("Credenciales incorrectas para el usuario: " + user.getUsername());
             return Response.status(Response.Status.UNAUTHORIZED).entity("{\"message\": \"Credenciales incorrectas\"}").build();
